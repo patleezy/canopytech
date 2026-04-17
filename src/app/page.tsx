@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SavedBriefBanner } from "@/components/landing/SavedBriefBanner";
 
 export const metadata: Metadata = {
   title: "Canopy Tech — Build on solid ground",
@@ -42,6 +43,11 @@ export default function HomePage() {
               compliance flags, and a system prompt ready to paste into your AI
               tool.
             </p>
+          </div>
+
+          {/* Saved brief banner — only shown if one exists in localStorage */}
+          <div className="w-full">
+            <SavedBriefBanner />
           </div>
 
           {/* CTA Cards */}

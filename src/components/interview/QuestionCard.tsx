@@ -18,7 +18,8 @@ function InfoTooltip({ text }: { text: string }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative inline-block">
+    // inline-block so it sits on the same line as the surrounding text
+    <span className="relative inline-block align-middle ml-1.5 translate-y-[-1px]">
       <button
         type="button"
         onMouseEnter={() => setOpen(true)}
@@ -28,10 +29,8 @@ function InfoTooltip({ text }: { text: string }) {
         onClick={() => setOpen((v) => !v)}
         aria-label="Why we ask this"
         aria-expanded={open}
-        aria-describedby={open ? "tooltip-content" : undefined}
         className={cn(
-          "inline-flex items-center justify-center w-5 h-5 rounded-full border transition-all",
-          "text-[10px] font-bold leading-none",
+          "inline-flex items-center justify-center w-[18px] h-[18px] rounded-full border text-[10px] font-bold leading-none transition-all",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy",
           open
             ? "border-amber-canopy text-amber-canopy bg-amber-canopy/10"
@@ -42,17 +41,17 @@ function InfoTooltip({ text }: { text: string }) {
       </button>
 
       {open && (
-        <div
-          id="tooltip-content"
+        <span
           role="tooltip"
-          className="absolute left-0 top-7 z-20 w-64 p-3 rounded-xl bg-forest-750 border border-forest-600 shadow-xl"
+          className="absolute left-0 top-6 z-20 block w-64 p-3 rounded-xl bg-forest-750 border border-forest-600 shadow-xl"
         >
-          <p className="text-xs text-text-secondary leading-relaxed">{text}</p>
-          {/* Arrow */}
-          <div className="absolute -top-1.5 left-2 w-3 h-3 rotate-45 bg-forest-750 border-l border-t border-forest-600" />
-        </div>
+          <span className="block text-xs text-text-secondary leading-relaxed">
+            {text}
+          </span>
+          <span className="absolute -top-1.5 left-1.5 w-3 h-3 rotate-45 bg-forest-750 border-l border-t border-forest-600" />
+        </span>
       )}
-    </div>
+    </span>
   );
 }
 
@@ -64,13 +63,11 @@ export function QuestionCard({
 }: QuestionCardProps) {
   return (
     <div className="flex flex-col gap-4">
-      {/* Question heading + info icon */}
-      <div className="flex items-start gap-2">
-        <h3 className="text-base font-semibold text-text-primary leading-snug">
-          {question.text}
-        </h3>
+      {/* Question heading — icon is inline in the text flow */}
+      <h3 className="text-base font-semibold text-text-primary leading-snug">
+        {question.text}
         {question.helpText && <InfoTooltip text={question.helpText} />}
-      </div>
+      </h3>
 
       {/* Input */}
       <div>

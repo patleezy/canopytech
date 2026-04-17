@@ -147,3 +147,40 @@ body {
 }
 .brief-content hr { border: none; border-top: 1px solid #172617; margin: 1.5rem 0; }
 .brief-content strong { color: #f0f4f0; font-weight: 600; }
+
+/* ── Print / PDF styles ─────────────────────────────────────────────────── */
+@media print {
+  /* White page, black ink */
+  html, body { background: #fff !important; color: #111 !important; }
+
+  /* Hide chrome — nav, export bar, CTA footer */
+  header, .brief-export-bar, .brief-cta-footer, .brief-nav-chips { display: none !important; }
+
+  /* Remove background colors from brief elements */
+  .brief-content th { background: #f5f5f5 !important; color: #333 !important; }
+  .brief-content td { color: #111 !important; }
+  .brief-content tr:nth-child(even) td { background: #fafafa !important; }
+  .brief-content th, .brief-content td { border-color: #ccc !important; }
+  .brief-content h3 { color: #111 !important; border-bottom-color: #ccc !important; }
+  .brief-content h4 { color: #555 !important; }
+  .brief-content p, .brief-content li { color: #333 !important; }
+  .brief-content code { background: #f5f5f5 !important; border-color: #ddd !important; color: #b45309 !important; }
+  .brief-content pre { background: #f5f5f5 !important; border-color: #ddd !important; }
+  .brief-content pre code { color: #333 !important; }
+  .brief-content ul li::before { color: #b45309 !important; }
+  .brief-content blockquote { border-left-color: #b45309 !important; color: #555 !important; }
+
+  /* Full width, no card shadow */
+  .brief-card { background: none !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
+
+  /* Avoid page breaks inside tables */
+  table, tr, td, th { page-break-inside: avoid; }
+
+  /* Ensure links print with URL */
+  a[href]::after { content: " (" attr(href) ")"; font-size: 0.75em; color: #666; }
+
+  @page {
+    margin: 2cm;
+    size: A4;
+  }
+}
