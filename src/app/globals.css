@@ -1,0 +1,174 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Forest green palette — near-black base */
+  --color-forest-950: #080d08;
+  --color-forest-900: #0b130b;
+  --color-forest-800: #0f1a0f;
+  --color-forest-750: #121f12;
+  --color-forest-700: #162416;
+  --color-forest-600: #1e301e;
+  --color-forest-500: #253c25;
+  --color-forest-400: #2e4a2e;
+
+  /* Amber accent */
+  --color-amber-canopy: #d97706;
+  --color-amber-canopy-light: #f59e0b;
+  --color-amber-canopy-dim: #92400e;
+
+  /* Text */
+  --color-text-primary: #f5f5f0;
+  --color-text-secondary: #a8b8a8;
+  --color-text-muted: #6b7e6b;
+  --color-text-amber: #d97706;
+
+  /* Fonts */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  --background: #080d08;
+  --foreground: #f5f5f0;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus ring — amber for accessibility */
+:focus-visible {
+  outline: 2px solid #d97706;
+  outline-offset: 2px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b130b;
+}
+::-webkit-scrollbar-thumb {
+  background: #253c25;
+  border-radius: 3px;
+}
+
+/* Prose overrides for brief rendering */
+.brief-content h3 {
+  color: #f5f5f0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #1e301e;
+}
+
+.brief-content h4 {
+  color: #a8b8a8;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.brief-content p {
+  color: #a8b8a8;
+  line-height: 1.75;
+  margin-bottom: 0.75rem;
+}
+
+.brief-content ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+.brief-content ul li {
+  color: #a8b8a8;
+  padding: 0.25rem 0;
+  padding-left: 1.25rem;
+  position: relative;
+}
+
+.brief-content ul li::before {
+  content: "–";
+  position: absolute;
+  left: 0;
+  color: #d97706;
+}
+
+.brief-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.brief-content th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  background: #0f1a0f;
+  color: #a8b8a8;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid #1e301e;
+}
+
+.brief-content td {
+  padding: 0.625rem 0.75rem;
+  color: #f5f5f0;
+  border: 1px solid #1e301e;
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.brief-content tr:nth-child(even) td {
+  background: #0b130b;
+}
+
+.brief-content code {
+  font-family: var(--font-geist-mono), monospace;
+  background: #0f1a0f;
+  border: 1px solid #1e301e;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  color: #d97706;
+}
+
+.brief-content pre {
+  background: #0b130b;
+  border: 1px solid #1e301e;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.brief-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #a8b8a8;
+}
+
+.brief-content hr {
+  border: none;
+  border-top: 1px solid #1e301e;
+  margin: 1.5rem 0;
+}
+
+.brief-content strong {
+  color: #f5f5f0;
+  font-weight: 600;
+}
