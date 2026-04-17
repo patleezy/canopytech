@@ -183,6 +183,32 @@ export default function HomePage() {
             ))}
           </div>
 
+          {/* Why not just ask Claude? */}
+          <div className="flex flex-col gap-4 p-6 rounded-2xl bg-forest-900 border border-forest-700">
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-bold text-text-primary">
+                Why not just ask Claude directly?
+              </p>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Claude answers what you ask. Canopy asks what you forgot to mention.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              {VS_ROWS.map(({ llm, canopy }) => (
+                <div key={llm} className="contents">
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-forest-800 border border-forest-700">
+                    <span className="flex-shrink-0 text-text-muted mt-px">✗</span>
+                    <span className="text-text-muted leading-relaxed">{llm}</span>
+                  </div>
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-forest-800 border border-amber-canopy/20">
+                    <span className="flex-shrink-0 text-amber-canopy mt-px">✓</span>
+                    <span className="text-text-secondary leading-relaxed">{canopy}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="text-center flex flex-col gap-4">
             <p className="text-text-secondary text-sm leading-relaxed max-w-md mx-auto">
               Canopy asks the right questions{" "}
@@ -225,6 +251,25 @@ export default function HomePage() {
     </main>
   );
 }
+
+const VS_ROWS = [
+  {
+    llm: "Answers based on what you told it",
+    canopy: "18 structured questions surface what you forgot to mention",
+  },
+  {
+    llm: "Hedged 'here are your options' advice",
+    canopy: "Opinionated: one recommendation, one alternative, clear reasoning",
+  },
+  {
+    llm: "Compliance flags only if you know to ask",
+    canopy: "GDPR, HIPAA, COPPA flagged automatically from your answers",
+  },
+  {
+    llm: "You figure out the system prompt",
+    canopy: "Ready-to-paste prompt, tailored to your specific AI coding tool",
+  },
+];
 
 const PAIN_POINTS = [
   {
