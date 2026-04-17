@@ -32,7 +32,8 @@ export function FreeTextInput({
       className={cn(
         "w-full bg-forest-800 border border-forest-600 rounded-xl px-4 py-3",
         "text-text-primary placeholder:text-text-muted",
-        "text-sm leading-relaxed resize-none",
+        // 16px minimum prevents iOS Safari auto-zoom on focus
+        "text-[16px] leading-relaxed resize-none",
         "transition-colors duration-150",
         "hover:border-forest-500",
         "focus:outline-none focus:border-amber-canopy focus:ring-1 focus:ring-amber-canopy",
