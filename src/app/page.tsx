@@ -34,14 +34,16 @@ export default function HomePage() {
           </div>
 
           {/* Headline */}
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-3">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary tracking-tight leading-tight">
               Build on solid ground
             </h1>
-            <p className="text-base sm:text-lg text-text-secondary max-w-lg leading-relaxed">
-              5 layers of questions. A complete tech stack, cost estimate,
-              compliance flags, and a system prompt ready to paste into your AI
-              tool.
+            <p className="text-lg sm:text-xl text-text-primary max-w-lg leading-relaxed font-medium">
+              Ask the questions your future CTO would ask —<br className="hidden sm:block" /> before you write a line of code.
+            </p>
+            <p className="text-sm text-text-muted max-w-md leading-relaxed">
+              5 layers of questions. Tech stack, cost estimate, compliance flags,
+              and a system prompt ready to paste into your AI tool.
             </p>
           </div>
 
