@@ -11,6 +11,7 @@ export interface Question {
   layerName: string;
   type: QuestionType;
   text: string;
+  helpText?: string;
   options?: QuestionOption[];
 }
 
@@ -20,7 +21,7 @@ export type AnswerMap = Partial<Record<number, AnswerValue>>;
 export type InterviewPhase = "interviewing" | "submitting" | "complete";
 
 export interface InterviewState {
-  currentIndex: number;
+  currentLayer: 1 | 2 | 3 | 4 | 5;
   answers: AnswerMap;
   direction: "forward" | "backward";
   phase: InterviewPhase;
@@ -28,8 +29,8 @@ export interface InterviewState {
 
 export type InterviewAction =
   | { type: "SET_ANSWER"; questionId: number; answer: AnswerValue }
-  | { type: "NEXT" }
-  | { type: "PREV" }
+  | { type: "NEXT_LAYER" }
+  | { type: "PREV_LAYER" }
   | { type: "SUBMIT" }
   | { type: "RESET" }
   | { type: "HYDRATE"; state: InterviewState };

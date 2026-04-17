@@ -4,26 +4,21 @@ import { useReducer, useEffect, useCallback, useState } from "react";
 import {
   initialState,
   interviewReducer,
-  currentQuestion,
-  currentAnswer,
-  hasValidAnswer,
+  isLayerComplete,
 } from "./interview-reducer";
-import { QUESTIONS } from "./interview-data";
 import type { AnswerValue, InterviewState } from "@/types/interview";
 
-const STORAGE_KEY = "canopy_interview_state";
+const STORAGE_KEY = "canopy_interview_v2";
 
 export function useInterview() {
   const [state, dispatch] = useReducer(interviewReducer, initialState);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Hydrate from localStorage on mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as InterviewState;
-        // Don't restore a "submitting" or "complete" phase — restart
         if (parsed.phase === "interviewing") {
           dispatch({ type: "HYDRATE", state: parsed });
         }
@@ -34,25 +29,21 @@ export function useInterview() {
     setIsHydrated(true);
   }, []);
 
-  // Persist to localStorage on every state change
   useEffect(() => {
     if (!isHydrated) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
-      // Storage unavailable — continue without persistence
+      // Storage unavailable
     }
   }, [state, isHydrated]);
 
-  const setAnswer = useCallback(
-    (questionId: number, answer: AnswerValue) => {
-      dispatch({ type: "SET_ANSWER", questionId, answer });
-    },
-    []
-  );
+  const setAnswer = useCallback((questionId: number, answer: AnswerValue) => {
+    dispatch({ type: "SET_ANSWER", questionId, answer });
+  }, []);
 
-  const next = useCallback(() => dispatch({ type: "NEXT" }), []);
-  const prev = useCallback(() => dispatch({ type: "PREV" }), []);
+  const nextLayer = useCallback(() => dispatch({ type: "NEXT_LAYER" }), []);
+  const prevLayer = useCallback(() => dispatch({ type: "PREV_LAYER" }), []);
 
   const reset = useCallback(() => {
     try {
@@ -63,24 +54,20 @@ export function useInterview() {
     dispatch({ type: "RESET" });
   }, []);
 
-  const question = currentQuestion(state);
-  const answer = currentAnswer(state);
-  const canAdvance = hasValidAnswer(state);
-  const isFirstQuestion = state.currentIndex === 0;
-  const isLastQuestion = state.currentIndex === QUESTIONS.length - 1;
+  const layerComplete = isLayerComplete(state.currentLayer, state.answers);
+  const isFirstLayer = state.currentLayer === 1;
+  const isLastLayer = state.currentLayer === 5;
 
   return {
     state,
     dispatch,
     isHydrated,
-    question,
-    answer,
-    canAdvance,
-    isFirstQuestion,
-    isLastQuestion,
+    layerComplete,
+    isFirstLayer,
+    isLastLayer,
     setAnswer,
-    next,
-    prev,
+    nextLayer,
+    prevLayer,
     reset,
   };
 }

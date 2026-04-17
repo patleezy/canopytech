@@ -7,14 +7,20 @@ interface FreeTextInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  autoFocus?: boolean;
 }
 
-export function FreeTextInput({ value, onChange, placeholder }: FreeTextInputProps) {
+export function FreeTextInput({
+  value,
+  onChange,
+  placeholder,
+  autoFocus = false,
+}: FreeTextInputProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    ref.current?.focus();
-  }, []);
+    if (autoFocus) ref.current?.focus();
+  }, [autoFocus]);
 
   return (
     <textarea
@@ -26,11 +32,11 @@ export function FreeTextInput({ value, onChange, placeholder }: FreeTextInputPro
       className={cn(
         "w-full bg-forest-800 border border-forest-600 rounded-xl px-4 py-3",
         "text-text-primary placeholder:text-text-muted",
-        "text-base leading-relaxed resize-none",
+        "text-sm leading-relaxed resize-none",
         "transition-colors duration-150",
         "hover:border-forest-500",
         "focus:outline-none focus:border-amber-canopy focus:ring-1 focus:ring-amber-canopy",
-        "min-h-[120px]"
+        "min-h-[100px]"
       )}
       aria-label="Your answer"
     />

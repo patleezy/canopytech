@@ -7,7 +7,9 @@ export const QUESTIONS: Question[] = [
     layer: 1,
     layerName: "Project Basics",
     type: "free-text",
-    text: "What does your app do? Describe it in 2–3 sentences like you're explaining it to a friend.",
+    text: "What does your app do?",
+    helpText:
+      "Describe it like you're explaining it to a friend — 2 or 3 sentences is perfect. This shapes everything: the stack, the database, the AI approach.",
   },
   {
     id: 2,
@@ -15,6 +17,8 @@ export const QUESTIONS: Question[] = [
     layerName: "Project Basics",
     type: "single-select",
     text: "Who is it for?",
+    helpText:
+      "The audience changes which auth solution, database rules, and compliance requirements we recommend. A personal tool and a public app need very different setups.",
     options: [
       { id: "just_me", label: "Just me" },
       { id: "small_team", label: "A small team I know" },
@@ -27,7 +31,9 @@ export const QUESTIONS: Question[] = [
     layer: 1,
     layerName: "Project Basics",
     type: "multi-select",
-    text: "What should users be able to do in it?",
+    text: "What should users be able to do?",
+    helpText:
+      "User actions determine what your backend needs to support. Read-only apps are simple. Apps where users create content need more infrastructure.",
     options: [
       { id: "read", label: "Read or view information" },
       { id: "submit", label: "Submit or enter information" },
@@ -41,6 +47,8 @@ export const QUESTIONS: Question[] = [
     layerName: "Project Basics",
     type: "single-select",
     text: "Does it need AI?",
+    helpText:
+      "AI adds cost and complexity. Knowing this upfront lets us size your API budget correctly and route you to the right model — Claude for reasoning tasks, Gemini for long documents.",
     options: [
       { id: "ai_core", label: "Yes — AI is the core feature" },
       { id: "ai_assist", label: "Yes — AI assists but isn't the main feature" },
@@ -56,6 +64,8 @@ export const QUESTIONS: Question[] = [
     layerName: "Users & Scale",
     type: "single-select",
     text: "How many people do you expect to use this?",
+    helpText:
+      "Scale affects your database tier, hosting plan, and whether you need a CDN. Free tiers are great — until they aren't. We'll tell you exactly when you'll hit the wall.",
     options: [
       { id: "just_me", label: "Just me" },
       { id: "small_group", label: "Small group 2–20" },
@@ -70,6 +80,8 @@ export const QUESTIONS: Question[] = [
     layerName: "Users & Scale",
     type: "single-select",
     text: "Do users need their own accounts?",
+    helpText:
+      "Auth shapes your entire data model. Getting this wrong early means a painful migration later — especially if you need to add row-level security after the fact.",
     options: [
       { id: "yes_private", label: "Yes — private data per user" },
       { id: "yes_optional", label: "Yes — but optional sign-in" },
@@ -83,6 +95,8 @@ export const QUESTIONS: Question[] = [
     layerName: "Users & Scale",
     type: "single-select",
     text: "Does it need to update in real time?",
+    helpText:
+      "Real-time features (live chat, collaborative editing, dashboards) need different infrastructure: WebSockets, Supabase Realtime, or Pusher. This affects hosting cost significantly.",
     options: [
       { id: "yes", label: "Yes definitely" },
       { id: "maybe", label: "Maybe eventually" },
@@ -97,12 +111,20 @@ export const QUESTIONS: Question[] = [
     layerName: "Data & Privacy",
     type: "multi-select",
     text: "What kind of information will your app store?",
+    helpText:
+      "What you store determines your compliance requirements and storage costs. Health or financial data triggers legal rules (HIPAA, FINRA) that change your entire infrastructure choice.",
     options: [
       { id: "nothing", label: "Nothing — it's stateless" },
       { id: "preferences", label: "Basic preferences or settings" },
       { id: "ugc", label: "User-generated content (posts, notes, files)" },
-      { id: "personal", label: "Personal information (names, emails, addresses)" },
-      { id: "sensitive", label: "Sensitive information (health, financial, legal data)" },
+      {
+        id: "personal",
+        label: "Personal information (names, emails, addresses)",
+      },
+      {
+        id: "sensitive",
+        label: "Sensitive information (health, financial, legal data)",
+      },
     ],
   },
   {
@@ -111,6 +133,8 @@ export const QUESTIONS: Question[] = [
     layerName: "Data & Privacy",
     type: "single-select",
     text: "Where are your users located?",
+    helpText:
+      "GDPR applies to anyone with EU users — even if your company is in the US. Knowing this now means we can flag privacy requirements before you launch, not after.",
     options: [
       { id: "us_only", label: "Just the US" },
       { id: "us_europe", label: "US and Europe" },
@@ -123,7 +147,9 @@ export const QUESTIONS: Question[] = [
     layer: 3,
     layerName: "Data & Privacy",
     type: "single-select",
-    text: "Could this app ever handle information about children under 13?",
+    text: "Could this app ever reach children under 13?",
+    helpText:
+      "COPPA is a US federal law. Apps that might be used by children under 13 have strict data collection rules — violating them is a legal liability, not just a best practice.",
     options: [
       { id: "yes", label: "Yes" },
       { id: "no", label: "No" },
@@ -138,6 +164,8 @@ export const QUESTIONS: Question[] = [
     layerName: "Constraints",
     type: "single-select",
     text: "What's your monthly budget for services and APIs?",
+    helpText:
+      "There's always a free path. But scale changes that fast — especially with AI. We'll show you the free tier ceiling for every service we recommend.",
     options: [
       { id: "free", label: "$0 — free tiers only" },
       { id: "under_25", label: "Under $25/month" },
@@ -151,7 +179,9 @@ export const QUESTIONS: Question[] = [
     layer: 4,
     layerName: "Constraints",
     type: "multi-select",
-    text: "Do you have any existing accounts with these services?",
+    text: "Do you have existing accounts with any of these?",
+    helpText:
+      "Existing accounts mean free credits, familiar tooling, and one less vendor to onboard. We'll prioritize your ecosystem when the quality tradeoff is acceptable.",
     options: [
       { id: "google_cloud", label: "Google Cloud" },
       { id: "firebase", label: "Firebase" },
@@ -170,6 +200,8 @@ export const QUESTIONS: Question[] = [
     layerName: "Constraints",
     type: "single-select",
     text: "When do you want to launch?",
+    helpText:
+      "Timeline affects how much architecture we can realistically recommend. A this-week launch needs a different stack than a 3-month build. We'll match the recommendation to the runway.",
     options: [
       { id: "this_week", label: "This week" },
       { id: "this_month", label: "This month" },
@@ -183,6 +215,8 @@ export const QUESTIONS: Question[] = [
     layerName: "Constraints",
     type: "single-select",
     text: "What vibe coding tool are you using?",
+    helpText:
+      "Each tool has different strengths for scaffolding. We tailor your system prompt to your tool's syntax and workflow so you can paste it in and go.",
     options: [
       { id: "cursor", label: "Cursor" },
       { id: "claude", label: "Claude" },
@@ -201,6 +235,8 @@ export const QUESTIONS: Question[] = [
     layerName: "Future & Scale",
     type: "single-select",
     text: "Could you see your company or employer using this someday?",
+    helpText:
+      "Enterprise use means SSO requirements, IT approval processes, and different security standards. If that's the goal, the stack choice matters more than you think — right now.",
     options: [
       { id: "yes_goal", label: "Yes — that's the goal" },
       { id: "maybe", label: "Maybe eventually" },
@@ -214,6 +250,8 @@ export const QUESTIONS: Question[] = [
     layerName: "Future & Scale",
     type: "single-select",
     text: "Do you work in a regulated industry?",
+    helpText:
+      "Regulated industries have mandatory compliance requirements that affect your entire stack — not just the database. Healthcare means HIPAA. Finance means SOC 2. These are non-negotiable.",
     options: [
       { id: "healthcare", label: "Healthcare" },
       { id: "finance_legal", label: "Finance or Legal" },
@@ -228,6 +266,8 @@ export const QUESTIONS: Question[] = [
     layerName: "Future & Scale",
     type: "single-select",
     text: "Would you ever want to charge money for this?",
+    helpText:
+      "Monetization affects which payment providers, pricing models, and feature gating to build in from day one. Retrofitting payments is painful — plan for it now even if it's later.",
     options: [
       { id: "yes_plan", label: "Yes — that's the plan" },
       { id: "maybe_premium", label: "Maybe a premium tier eventually" },
@@ -241,6 +281,8 @@ export const QUESTIONS: Question[] = [
     layerName: "Future & Scale",
     type: "single-select",
     text: "Would a security or IT team ever need to approve this?",
+    helpText:
+      "If yes, we'll flag enterprise-grade requirements that IT teams typically require: SSO, audit logs, role-based access, data residency. Better to know now than get blocked at the gate.",
     options: [
       { id: "yes", label: "Yes definitely" },
       { id: "possibly", label: "Possibly" },
@@ -249,15 +291,18 @@ export const QUESTIONS: Question[] = [
   },
 ];
 
-export const LAYERS: Record<
-  number,
-  { name: string; questionIds: number[] }
-> = {
-  1: { name: "Project Basics", questionIds: [1, 2, 3, 4] },
-  2: { name: "Users & Scale", questionIds: [5, 6, 7] },
-  3: { name: "Data & Privacy", questionIds: [8, 9, 10] },
-  4: { name: "Constraints", questionIds: [11, 12, 13, 14] },
-  5: { name: "Future & Scale", questionIds: [15, 16, 17, 18] },
-};
+export const LAYERS: Record<number, { name: string; questionIds: number[] }> =
+  {
+    1: { name: "Project Basics", questionIds: [1, 2, 3, 4] },
+    2: { name: "Users & Scale", questionIds: [5, 6, 7] },
+    3: { name: "Data & Privacy", questionIds: [8, 9, 10] },
+    4: { name: "Constraints", questionIds: [11, 12, 13, 14] },
+    5: { name: "Future & Scale", questionIds: [15, 16, 17, 18] },
+  };
 
+export const TOTAL_LAYERS = 5;
 export const TOTAL_QUESTIONS = QUESTIONS.length;
+
+export function questionsForLayer(layer: number): Question[] {
+  return QUESTIONS.filter((q) => q.layer === layer);
+}

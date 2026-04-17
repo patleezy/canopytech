@@ -1,12 +1,13 @@
-import { QUESTIONS, TOTAL_QUESTIONS } from "./interview-data";
+import { questionsForLayer, TOTAL_LAYERS } from "./interview-data";
 import type {
   AnswerValue,
   InterviewAction,
   InterviewState,
+  AnswerMap,
 } from "@/types/interview";
 
 export const initialState: InterviewState = {
-  currentIndex: 0,
+  currentLayer: 1,
   answers: {},
   direction: "forward",
   phase: "interviewing",
@@ -23,17 +24,25 @@ export function interviewReducer(
         answers: { ...state.answers, [action.questionId]: action.answer },
       };
 
-    case "NEXT": {
-      const nextIndex = state.currentIndex + 1;
-      if (nextIndex >= TOTAL_QUESTIONS) {
+    case "NEXT_LAYER": {
+      const next = state.currentLayer + 1;
+      if (next > TOTAL_LAYERS) {
         return { ...state, direction: "forward", phase: "submitting" };
       }
-      return { ...state, currentIndex: nextIndex, direction: "forward" };
+      return {
+        ...state,
+        currentLayer: next as InterviewState["currentLayer"],
+        direction: "forward",
+      };
     }
 
-    case "PREV": {
-      const prevIndex = Math.max(0, state.currentIndex - 1);
-      return { ...state, currentIndex: prevIndex, direction: "backward" };
+    case "PREV_LAYER": {
+      const prev = Math.max(1, state.currentLayer - 1);
+      return {
+        ...state,
+        currentLayer: prev as InterviewState["currentLayer"],
+        direction: "backward",
+      };
     }
 
     case "SUBMIT":
@@ -50,19 +59,23 @@ export function interviewReducer(
   }
 }
 
-export function currentQuestion(state: InterviewState) {
-  return QUESTIONS[state.currentIndex];
+export function isLayerComplete(
+  layer: number,
+  answers: AnswerMap
+): boolean {
+  const questions = questionsForLayer(layer);
+  return questions.every((q) => {
+    const answer = answers[q.id];
+    if (!answer) return false;
+    if (typeof answer === "string") return answer.trim().length > 0;
+    if (Array.isArray(answer)) return answer.length > 0;
+    return false;
+  });
 }
 
-export function currentAnswer(state: InterviewState): AnswerValue | undefined {
-  const q = currentQuestion(state);
-  return q ? state.answers[q.id] : undefined;
-}
-
-export function hasValidAnswer(state: InterviewState): boolean {
-  const answer = currentAnswer(state);
-  if (!answer) return false;
-  if (typeof answer === "string") return answer.trim().length > 0;
-  if (Array.isArray(answer)) return answer.length > 0;
-  return false;
+export function currentLayerAnswer(
+  questionId: number,
+  answers: AnswerMap
+): AnswerValue | undefined {
+  return answers[questionId];
 }
