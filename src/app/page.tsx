@@ -25,17 +25,34 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <section className="flex flex-col items-center justify-center px-4 pt-12 pb-16 sm:pt-20 sm:pb-20 text-center">
-        <div className="flex flex-col items-center gap-8 max-w-2xl mx-auto">
+      <section className="relative flex flex-col items-center justify-center px-4 pt-12 pb-16 sm:pt-20 sm:pb-20 text-center overflow-hidden">
+        {/* Ambient glow — warm amber pooled behind the headline, like candlelight */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[420px] rounded-full blur-[120px]"
+          style={{ background: "radial-gradient(ellipse, rgba(217,119,6,0.07) 0%, transparent 70%)" }}
+        />
+        {/* Second, cooler glow for depth */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1/3 left-1/3 w-[400px] h-[300px] rounded-full blur-[100px]"
+          style={{ background: "radial-gradient(ellipse, rgba(34,78,64,0.5) 0%, transparent 70%)" }}
+        />
+
+        <div className="relative flex flex-col items-center gap-8 max-w-2xl mx-auto">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-forest-800 border border-forest-600 text-xs text-text-secondary">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-forest-800/80 border border-forest-600 text-xs text-text-secondary backdrop-blur-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-canopy animate-pulse" />
             AI-powered architecture review
           </div>
 
           {/* Headline */}
           <div className="flex flex-col items-center gap-3">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text-primary tracking-tight leading-tight">
+            {/* Gradient text: top-lit from above, like light catching the surface */}
+            <h1
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight bg-clip-text text-transparent"
+              style={{ backgroundImage: "linear-gradient(to bottom, #f5faf7 0%, #c8ddd5 100%)" }}
+            >
               Build on solid ground
             </h1>
             <p className="text-lg sm:text-xl text-text-primary max-w-lg leading-relaxed font-medium">
@@ -57,7 +74,7 @@ export default function HomePage() {
             {/* Start New Project */}
             <Link
               href="/interview"
-              className="group relative flex flex-col gap-4 p-6 rounded-2xl bg-forest-800 border border-forest-600 text-left transition-all duration-200 hover:bg-forest-750 hover:border-amber-canopy/50 hover:shadow-[0_0_28px_rgba(217,119,6,0.1)]"
+              className="group relative flex flex-col gap-4 p-6 rounded-2xl bg-forest-800 border border-forest-600 text-left transition-all duration-300 hover:bg-forest-750 hover:border-amber-canopy/60 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(217,119,6,0.15),0_0_0_1px_rgba(217,119,6,0.1)]"
             >
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 rounded-xl bg-amber-canopy/10 border border-amber-canopy/20 flex items-center justify-center">
@@ -150,7 +167,13 @@ export default function HomePage() {
       </section>
 
       {/* Why Use Canopy? */}
-      <section className="border-t border-forest-800 px-4 py-14 sm:py-20">
+      <section className="relative px-4 py-14 sm:py-20">
+        {/* Gradient divider — fades in from transparency, cleaner than a hard line */}
+        <div
+          aria-hidden="true"
+          className="absolute top-0 inset-x-0 h-px"
+          style={{ background: "linear-gradient(to right, transparent, rgba(34,78,64,0.8) 20%, rgba(34,78,64,0.8) 80%, transparent)" }}
+        />
         <div className="max-w-2xl mx-auto flex flex-col gap-10">
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl sm:text-3xl font-bold text-text-primary text-center">

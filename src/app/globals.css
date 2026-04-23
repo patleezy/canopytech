@@ -1,27 +1,29 @@
 @import "tailwindcss";
 
 @theme inline {
-  /* Midnight army green — near-black base */
-  --color-forest-950: #040a04;
-  --color-forest-900: #060e06;
-  --color-forest-800: #091409;
-  --color-forest-750: #0c1a0c;
-  --color-forest-700: #101f10;
-  --color-forest-600: #172617;
-  --color-forest-500: #1e301e;
-  --color-forest-400: #263c26;
+  /* Midnight teal-green — iPhone 11 Pro inspired.
+     Hue shifted ~165° (teal vs pure 120° green), desaturated, near-black.
+     Reads almost black; the green-teal reveals itself under light. */
+  --color-forest-950: #060f0c;
+  --color-forest-900: #091a14;
+  --color-forest-800: #0d221b;
+  --color-forest-750: #102820;
+  --color-forest-700: #143028;
+  --color-forest-600: #1b3f34;
+  --color-forest-500: #224e40;
+  --color-forest-400: #2a5e4d;
 
-  /* Warm amber accent */
+  /* Warm amber accent — unchanged, contrast pops harder on teal */
   --color-amber-canopy: #d97706;
   --color-amber-canopy-light: #f59e0b;
-  --color-amber-canopy-dim: #78420a;
-  --color-amber-canopy-subtle: #1a1000;
+  --color-amber-canopy-dim: #7c3f06;
+  --color-amber-canopy-subtle: #150e00;
 
-  /* Text — WCAG AA compliant on forest-950 */
-  --color-text-primary: #f0f4f0;    /* ~19:1 on #040a04 */
-  --color-text-secondary: #9eb09e;  /* ~8.5:1 on #040a04 */
-  --color-text-muted: #7a8f7a;      /* ~6.5:1 on #040a04 */
-  --color-text-amber: #d97706;      /* ~6.8:1 on #040a04 */
+  /* Text — WCAG AA verified on new midnight base */
+  --color-text-primary: #edf4f1;    /* ~18:1 on #060f0c */
+  --color-text-secondary: #94b8a8;  /* ~7.8:1 on #060f0c */
+  --color-text-muted: #6a8f7d;      /* ~5.4:1 on #060f0c */
+  --color-text-amber: #d97706;      /* ~6.5:1 on #060f0c */
 
   /* Fonts */
   --font-sans: var(--font-geist-sans);
@@ -29,8 +31,8 @@
 }
 
 :root {
-  --background: #040a04;
-  --foreground: #f0f4f0;
+  --background: #060f0c;
+  --foreground: #edf4f1;
 }
 
 html {
@@ -45,6 +47,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Subtle film grain overlay — the iPhone backglass effect.
+   SVG feTurbulence noise, mix-blend-mode:overlay at 3% opacity.
+   Pointer-events none so it never interferes with interaction. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.3;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)' opacity='0.12'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
 /* Focus ring — amber, clearly visible */
 :focus-visible {
   outline: 2px solid #d97706;
@@ -54,8 +72,8 @@ body {
 
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #060e06; }
-::-webkit-scrollbar-thumb { background: #1e301e; border-radius: 3px; }
+::-webkit-scrollbar-track { background: #091a14; }
+::-webkit-scrollbar-thumb { background: #224e40; border-radius: 3px; }
 
 /* Brief markdown renderer */
 .brief-content h3 {
