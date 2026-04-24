@@ -168,8 +168,13 @@ body::after {
 
 /* ── Print / PDF styles ─────────────────────────────────────────────────── */
 @media print {
-  /* White page, black ink */
-  html, body { background: #fff !important; color: #111 !important; }
+  /* Force light color-scheme — overrides html { color-scheme: dark } so iOS
+     Safari and Chrome render white backgrounds instead of the dark theme */
+  html { color-scheme: light; background: #fff !important; }
+  body { background: #fff !important; color: #111 !important; }
+
+  /* Remove grain overlay */
+  body::after { display: none !important; }
 
   /* Hide chrome — nav, export bar, CTA footer */
   header, .brief-export-bar, .brief-cta-footer, .brief-nav-chips { display: none !important; }
@@ -196,6 +201,13 @@ body::after {
 
   /* Ensure links print with URL */
   a[href]::after { content: " (" attr(href) ")"; font-size: 0.75em; color: #666; }
+
+  /* Audit report — same ink-friendly treatment as brief */
+  .audit-content { background: none !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
+  .audit-content * { color: #111 !important; background-color: transparent !important; border-color: #ccc !important; }
+  .audit-content th { background: #f5f5f5 !important; color: #333 !important; }
+  .audit-content tr:nth-child(even) td { background: #fafafa !important; }
+  .audit-content pre, .audit-content code { background: #f5f5f5 !important; color: #333 !important; }
 
   @page {
     margin: 2cm;
