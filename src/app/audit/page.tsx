@@ -21,15 +21,47 @@ function downloadText(content: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+function markdownToPlainText(md: string): string {
+  return md
+    // H3 headings → uppercase + double underline
+    .replace(/^### (.+)$/gm, (_, t) => `${t.toUpperCase()}\n${"═".repeat(t.replace(/\p{Emoji}/gu, "").trim().length)}`)
+    // H4 headings → uppercase + single underline, with leading newline
+    .replace(/^#### (.+)$/gm, (_, t) => `\n${t.toUpperCase()}\n${"─".repeat(Math.min(t.replace(/\p{Emoji}/gu, "").trim().length, 40))}`)
+    // Bold and italic — strip markers, keep text
+    .replace(/\*{1,2}([^*\n]+)\*{1,2}/g, "$1")
+    // Fenced code blocks — keep content, drop fences
+    .replace(/^```[^\n]*\n([\s\S]*?)^```$/gm, "$1")
+    // Inline code — keep text
+    .replace(/`([^`]+)`/g, "$1")
+    // Table separator rows (|---|---|) — remove entirely
+    .replace(/^\|[-| :]+\|$/gm, "")
+    // Table data rows — join cells with spaces
+    .replace(/^\|(.+)\|$/gm, (_, cells: string) =>
+      cells
+        .split("|")
+        .map((c) => c.trim())
+        .filter(Boolean)
+        .join("   ")
+    )
+    // Horizontal rules
+    .replace(/^---+$/gm, "────────────────────────────────────────")
+    // Collapse 3+ blank lines to 2
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function openEmail(content: string, repoName: string) {
-  const subject = encodeURIComponent(`Audit Report: ${repoName}`);
-  const bodyText =
-    content.length > 1_800
-      ? content.slice(0, 1_800) +
-        "\n\n[Report truncated — view full version at canopytech.app/audit]"
-      : content;
-  const body = encodeURIComponent(bodyText);
-  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  const subject = encodeURIComponent(`Canopy Tech Audit: ${repoName}`);
+  const plain = markdownToPlainText(content);
+  // Truncate at a paragraph boundary near 2 000 chars to stay under mailto limits
+  let body = plain;
+  if (plain.length > 2_000) {
+    const cutoff = plain.lastIndexOf("\n\n", 2_000);
+    body =
+      plain.slice(0, cutoff > 1_200 ? cutoff : 2_000) +
+      "\n\n────────────────────────────────────────\nView the full report at canopytech.app/audit";
+  }
+  window.location.href = `mailto:?subject=${subject}&body=${encodeURIComponent(body)}`;
 }
 
 // ── Section splitting ─────────────────────────────────────────────────────────
@@ -65,18 +97,19 @@ function buildFixItPrompt(content: string, repoUrl: string): string {
   );
   const improvementsText = improvements?.text ?? content;
 
-  return `You are a senior software engineer helping me improve my codebase.
-
-I ran a readiness audit on ${repoUrl} and received these recommended improvements:
+  return `You are a senior software engineer. I ran a readiness audit on ${repoUrl} and got the following recommended improvements. Please implement them in priority order.
 
 ${improvementsText}
 
-Please implement these improvements in priority order. For each one:
+For each improvement:
 1. Identify the specific files that need to change
-2. Make the changes with a minimal, focused diff
+2. Make the change with a minimal, focused diff
 3. Briefly explain what you changed and why
 
-Start with improvement #1. Wait for my confirmation before moving to the next.`;
+Start with #1 and wait for my confirmation before moving to the next.
+
+---
+This prompt works with Claude Code, Cursor, Windsurf, GitHub Copilot, Lovable, Bolt, OpenAI Codex, or any AI coding assistant that can read and edit files.`;
 }
 
 // ── Components ────────────────────────────────────────────────────────────────
@@ -409,23 +442,6 @@ export default function AuditPage() {
 
   return (
     <>
-      {/* Ink-optimized print styles */}
-      <style>{`
-        @media print {
-          body { background: white !important; }
-          .audit-content * {
-            color: #111 !important;
-            background-color: transparent !important;
-            border-color: #ddd !important;
-          }
-          .audit-content thead tr,
-          .audit-content thead * { background: #f0f0f0 !important; }
-          .audit-content pre,
-          .audit-content code { background: #f5f5f5 !important; }
-          .audit-content table { border-collapse: collapse; }
-        }
-      `}</style>
-
       <main className="min-h-screen bg-forest-950 flex flex-col print:bg-white">
         {/* Header */}
         <header className="flex items-center justify-between px-6 py-4 border-b border-forest-700 print:hidden">
