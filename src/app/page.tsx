@@ -121,19 +121,17 @@ export default function HomePage() {
               </div>
             </Link>
 
-            {/* Audit Existing — disabled */}
-            <div
-              className="relative flex flex-col gap-4 p-6 rounded-2xl bg-forest-900 border border-forest-700 text-left opacity-50 cursor-not-allowed select-none"
-              aria-disabled="true"
-              role="button"
-              aria-label="Audit Existing Project — coming in Sprint 2"
+            {/* Audit Existing Project */}
+            <Link
+              href="/audit"
+              className="group relative flex flex-col gap-4 p-6 rounded-2xl bg-forest-800 border border-forest-600 text-left transition-all duration-300 hover:bg-forest-750 hover:border-amber-canopy/60 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(217,119,6,0.15),0_0_0_1px_rgba(217,119,6,0.1)]"
             >
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 rounded-xl bg-forest-700 border border-forest-600 flex items-center justify-center">
                   <svg
                     viewBox="0 0 20 20"
                     fill="none"
-                    className="w-5 h-5 text-text-muted"
+                    className="w-5 h-5 text-text-muted group-hover:text-amber-canopy transition-colors"
                     aria-hidden="true"
                   >
                     <path
@@ -145,23 +143,34 @@ export default function HomePage() {
                     />
                   </svg>
                 </div>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-forest-700 border border-forest-600 text-xs text-text-muted">
-                  Sprint 2
-                </span>
+                <svg
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  className="w-4 h-4 text-text-muted group-hover:text-amber-canopy transition-colors"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 8h8M8 4l4 4-4 4"
+                    stroke="currentColor"
+                    strokeWidth="1.25"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-base font-semibold text-text-secondary">
+                <span className="text-base font-semibold text-text-primary">
                   Audit Existing Project
                 </span>
-                <span className="text-sm text-text-muted">
+                <span className="text-sm text-text-secondary">
                   Submit a repo URL → get a readiness report
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs text-text-muted">
                 <ClockIcon className="w-3.5 h-3.5" />
-                Coming soon
+                About 30 seconds
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </section>
