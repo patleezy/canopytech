@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SavedBriefBanner } from "@/components/landing/SavedBriefBanner";
+import { SavedBriefBanner, SavedAuditBanner } from "@/components/landing/SavedBriefBanner";
 
 export const metadata: Metadata = {
   title: "Canopy Tech — Build on solid ground",
@@ -64,9 +64,10 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Saved brief banner — only shown if one exists in localStorage */}
-          <div className="w-full">
+          {/* Resume banners — only shown when saved results exist in localStorage */}
+          <div className="w-full flex flex-col gap-2">
             <SavedBriefBanner />
+            <SavedAuditBanner />
           </div>
 
           {/* CTA Cards */}

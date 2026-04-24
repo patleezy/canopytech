@@ -2,7 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { BriefRenderer } from "@/components/brief/BriefRenderer";
+import { saveAudit } from "@/lib/saved-briefs";
 import { cn } from "@/lib/utils";
+
+const SESSION_KEY = "canopy_audit";
 
 type Phase = "idle" | "loading" | "done" | "error";
 
@@ -123,6 +126,28 @@ function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) 
       )}
     >
       {copied ? "Copied" : label}
+    </button>
+  );
+}
+
+function SaveButton({ content, repoUrl }: { content: string; repoUrl: string }) {
+  const [saved, setSaved] = useState(false);
+  return (
+    <button
+      onClick={() => {
+        saveAudit(content, repoUrl);
+        setSaved(true);
+      }}
+      disabled={saved}
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy",
+        saved
+          ? "border-amber-canopy text-amber-canopy bg-amber-canopy/10 cursor-default"
+          : "border-forest-600 text-text-secondary hover:bg-forest-700 hover:text-text-primary"
+      )}
+    >
+      {saved ? "Saved" : "Save audit"}
     </button>
   );
 }
@@ -303,6 +328,22 @@ export default function AuditPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const isSubmitting = useRef(false);
 
+  // Restore from sessionStorage on mount (covers same-session navigation and
+  // landing-page "View audit" resume flow)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { url: string; content: string };
+        setUrl(parsed.url);
+        setReport(parsed.content);
+        setPhase("done");
+      }
+    } catch {
+      // ignore corrupt session data
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting.current || !url.trim()) return;
@@ -338,6 +379,7 @@ export default function AuditPage() {
         }
       }
 
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ url: url.trim(), content: accumulated }));
       setPhase("done");
     } catch {
       setErrorMsg("Network error — please check your connection and try again.");
@@ -348,6 +390,7 @@ export default function AuditPage() {
   };
 
   const handleReset = () => {
+    sessionStorage.removeItem(SESSION_KEY);
     setPhase("idle");
     setUrl("");
     setReport("");
@@ -490,6 +533,7 @@ export default function AuditPage() {
                   </p>
                   <div className="flex items-center gap-2 flex-wrap">
                     <CopyButton text={report} label="Copy all" />
+                    <SaveButton content={report} repoUrl={url} />
                     <ExportMenu content={report} repoName={repoName} />
                     <button
                       onClick={handleReset}
