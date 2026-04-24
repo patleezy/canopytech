@@ -5,6 +5,11 @@ export function buildPrompt(answers: AnswerMap): {
   systemPrompt: string;
   userMessage: string;
 } {
+  const q14 = QUESTIONS.find((q) => q.id === 14);
+  const q14Answer = answers[14] as string | undefined;
+  const toolLabel =
+    q14?.options?.find((o) => o.id === q14Answer)?.label ?? "your vibe coding tool";
+
   const systemPrompt = `You are the Canopy Tech AI — a Principal Systems Architect and Product Advisor. Your purpose is to help non-technical builders and vibe coders structure their projects correctly before they write a single line of code.
 
 You bridge the gap between "I have an idea" and "this is ready to ship." You are the general contractor consultation before the renovation begins.
@@ -94,7 +99,7 @@ Only include flags that are actually triggered. If no flags, omit this section.
 #### 🤖 YOUR VIBE CODING SYSTEM PROMPT
 
 \`\`\`
-COPY THIS INTO [TOOL NAME]:
+COPY THIS INTO ${toolLabel}:
 
 You are building [project description].
 
