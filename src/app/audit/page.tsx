@@ -1,9 +1,85 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { BriefRenderer } from "@/components/brief/BriefRenderer";
+import { saveAudit } from "@/lib/saved-briefs";
+import { cn } from "@/lib/utils";
+
+const SESSION_KEY = "canopy_audit";
 
 type Phase = "idle" | "loading" | "done" | "error";
+
+// ── Export helpers ────────────────────────────────────────────────────────────
+
+function downloadText(content: string, filename: string) {
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function openEmail(content: string, repoName: string) {
+  const subject = encodeURIComponent(`Audit Report: ${repoName}`);
+  const bodyText =
+    content.length > 1_800
+      ? content.slice(0, 1_800) +
+        "\n\n[Report truncated — view full version at canopytech.app/audit]"
+      : content;
+  const body = encodeURIComponent(bodyText);
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+// ── Section splitting ─────────────────────────────────────────────────────────
+
+function splitSections(content: string): { title: string | null; text: string }[] {
+  const parts: { title: string | null; text: string }[] = [];
+  const lines = content.split("\n");
+  let buffer: string[] = [];
+  let currentTitle: string | null = null;
+
+  for (const line of lines) {
+    if (line.startsWith("#### ")) {
+      if (buffer.length > 0) {
+        parts.push({ title: currentTitle, text: buffer.join("\n").trim() });
+        buffer = [];
+      }
+      currentTitle = line.replace(/^####\s+/, "").trim();
+      buffer.push(line);
+    } else {
+      buffer.push(line);
+    }
+  }
+  if (buffer.length > 0) {
+    parts.push({ title: currentTitle, text: buffer.join("\n").trim() });
+  }
+  return parts.filter((p) => p.text);
+}
+
+function buildFixItPrompt(content: string, repoUrl: string): string {
+  const parts = splitSections(content);
+  const improvements = parts.find((p) =>
+    p.title?.toUpperCase().includes("IMPROVEMENTS")
+  );
+  const improvementsText = improvements?.text ?? content;
+
+  return `You are a senior software engineer helping me improve my codebase.
+
+I ran a readiness audit on ${repoUrl} and received these recommended improvements:
+
+${improvementsText}
+
+Please implement these improvements in priority order. For each one:
+1. Identify the specific files that need to change
+2. Make the changes with a minimal, focused diff
+3. Briefly explain what you changed and why
+
+Start with improvement #1. Wait for my confirmation before moving to the next.`;
+}
+
+// ── Components ────────────────────────────────────────────────────────────────
 
 function CanopyLogo({ className }: { className?: string }) {
   return (
@@ -25,7 +101,7 @@ function CanopyLogo({ className }: { className?: string }) {
   );
 }
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -41,27 +117,209 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-forest-700 border border-forest-600 text-text-muted hover:text-text-primary hover:bg-forest-600 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy"
-    >
-      {copied ? (
-        <>
-          <svg viewBox="0 0 12 10" fill="none" className="w-3 h-2.5" aria-hidden="true">
-            <path d="M1 5l3.5 3.5L11 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Copied
-        </>
-      ) : (
-        <>
-          <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3" aria-hidden="true">
-            <rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.25" />
-            <path d="M10 4V2.5A1.5 1.5 0 008.5 1H2.5A1.5 1.5 0 001 2.5v6A1.5 1.5 0 002.5 10H4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
-          </svg>
-          Copy report
-        </>
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy",
+        copied
+          ? "border-amber-canopy text-amber-canopy bg-amber-canopy/10"
+          : "border-forest-600 text-text-secondary hover:bg-forest-700 hover:text-text-primary"
       )}
+    >
+      {copied ? "Copied" : label}
     </button>
   );
 }
+
+function SaveButton({ content, repoUrl }: { content: string; repoUrl: string }) {
+  const [saved, setSaved] = useState(false);
+  return (
+    <button
+      onClick={() => {
+        saveAudit(content, repoUrl);
+        setSaved(true);
+      }}
+      disabled={saved}
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy",
+        saved
+          ? "border-amber-canopy text-amber-canopy bg-amber-canopy/10 cursor-default"
+          : "border-forest-600 text-text-secondary hover:bg-forest-700 hover:text-text-primary"
+      )}
+    >
+      {saved ? "Saved" : "Save audit"}
+    </button>
+  );
+}
+
+function ExportMenu({ content, repoName }: { content: string; repoName: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  const slug = repoName.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className={cn(
+          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy",
+          "border-forest-600 text-text-secondary hover:bg-forest-700 hover:text-text-primary"
+        )}
+      >
+        Export
+        <svg
+          viewBox="0 0 12 12"
+          fill="none"
+          className={cn("w-3 h-3 transition-transform", open && "rotate-180")}
+          aria-hidden="true"
+        >
+          <path
+            d="M2 4l4 4 4-4"
+            stroke="currentColor"
+            strokeWidth="1.25"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-9 z-30 w-52 rounded-xl bg-forest-800 border border-forest-600 shadow-xl overflow-hidden py-1"
+        >
+          {[
+            {
+              label: "Download as .txt",
+              action: () => {
+                downloadText(content, `audit-${slug}.txt`);
+                setOpen(false);
+              },
+            },
+            {
+              label: "PDF (ink optimized)",
+              action: () => {
+                window.print();
+                setOpen(false);
+              },
+            },
+            {
+              label: "Send via email",
+              action: () => {
+                openEmail(content, repoName);
+                setOpen(false);
+              },
+            },
+          ].map((item) => (
+            <button
+              key={item.label}
+              role="menuitem"
+              onClick={item.action}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-text-secondary hover:bg-forest-700 hover:text-text-primary transition-colors text-left"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Per-section rendering with hover copy button
+function SectionedReport({ content }: { content: string }) {
+  const parts = splitSections(content);
+
+  return (
+    <div className="flex flex-col">
+      {parts.map((part, i) => (
+        <div
+          key={i}
+          className={cn(
+            "relative group",
+            i > 0 && part.title && "border-t border-forest-800 pt-1"
+          )}
+        >
+          {part.title && (
+            <div className="absolute top-3 right-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
+              <CopyButton text={part.text} label="Copy" />
+            </div>
+          )}
+          <BriefRenderer content={part.text} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Expandable fix-it prompt card
+function FixItPromptCard({ prompt }: { prompt: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-2xl border border-forest-700 bg-forest-900 overflow-hidden print:hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-forest-800 transition-colors"
+      >
+        <div className="flex flex-col gap-0.5">
+          <span className="text-sm font-semibold text-text-primary">
+            Get fix-it prompt
+          </span>
+          <span className="text-xs text-text-muted">
+            Ready-to-paste prompt for Claude, Cursor, or Windsurf
+          </span>
+        </div>
+        <svg
+          viewBox="0 0 16 16"
+          fill="none"
+          className={cn(
+            "w-4 h-4 text-text-muted flex-shrink-0 transition-transform",
+            open && "rotate-180"
+          )}
+          aria-hidden="true"
+        >
+          <path
+            d="M4 6l4 4 4-4"
+            stroke="currentColor"
+            strokeWidth="1.25"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="border-t border-forest-700 px-5 pb-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between pt-3 flex-wrap gap-2">
+            <p className="text-xs text-text-muted">
+              Copy and paste into your code agent to implement all improvements.
+            </p>
+            <CopyButton text={prompt} label="Copy prompt" />
+          </div>
+          <pre className="bg-forest-950 border border-forest-700 rounded-xl px-4 py-3 text-xs text-text-secondary font-mono leading-relaxed whitespace-pre-wrap overflow-x-auto max-h-72 overflow-y-auto">
+            {prompt}
+          </pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function AuditPage() {
   const [phase, setPhase] = useState<Phase>("idle");
@@ -69,6 +327,22 @@ export default function AuditPage() {
   const [report, setReport] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const isSubmitting = useRef(false);
+
+  // Restore from sessionStorage on mount (covers same-session navigation and
+  // landing-page "View audit" resume flow)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { url: string; content: string };
+        setUrl(parsed.url);
+        setReport(parsed.content);
+        setPhase("done");
+      }
+    } catch {
+      // ignore corrupt session data
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +379,7 @@ export default function AuditPage() {
         }
       }
 
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ url: url.trim(), content: accumulated }));
       setPhase("done");
     } catch {
       setErrorMsg("Network error — please check your connection and try again.");
@@ -115,135 +390,205 @@ export default function AuditPage() {
   };
 
   const handleReset = () => {
+    sessionStorage.removeItem(SESSION_KEY);
     setPhase("idle");
     setUrl("");
     setReport("");
     setErrorMsg("");
   };
 
+  const repoName =
+    url
+      .replace(/^https?:\/\/github\.com\//, "")
+      .split("/")
+      .slice(0, 2)
+      .join("/") || "repo";
+
+  const fixItPrompt =
+    phase === "done" ? buildFixItPrompt(report, url) : "";
+
   return (
-    <main className="min-h-screen bg-forest-950 flex flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-forest-700">
-        <a href="/" className="flex items-center gap-2 group">
-          <CanopyLogo className="w-6 h-6 text-amber-canopy" />
-          <span className="text-sm font-semibold text-text-primary tracking-tight">
-            Canopy Tech
-          </span>
-        </a>
-        <span className="text-xs text-text-muted">Repo Audit</span>
-      </header>
+    <>
+      {/* Ink-optimized print styles */}
+      <style>{`
+        @media print {
+          body { background: white !important; }
+          .audit-content * {
+            color: #111 !important;
+            background-color: transparent !important;
+            border-color: #ddd !important;
+          }
+          .audit-content thead tr,
+          .audit-content thead * { background: #f0f0f0 !important; }
+          .audit-content pre,
+          .audit-content code { background: #f5f5f5 !important; }
+          .audit-content table { border-collapse: collapse; }
+        }
+      `}</style>
 
-      <div className="flex-1 flex items-start justify-center px-4 py-8 sm:py-12">
-        <div className="w-full max-w-2xl">
+      <main className="min-h-screen bg-forest-950 flex flex-col print:bg-white">
+        {/* Header */}
+        <header className="flex items-center justify-between px-6 py-4 border-b border-forest-700 print:hidden">
+          <a href="/" className="flex items-center gap-2 group">
+            <CanopyLogo className="w-6 h-6 text-amber-canopy" />
+            <span className="text-sm font-semibold text-text-primary tracking-tight">
+              Canopy Tech
+            </span>
+          </a>
+          <span className="text-xs text-text-muted">Repo Audit</span>
+        </header>
 
-          {/* ── Idle: form ─────────────────────────────────────────────────────── */}
-          {phase === "idle" && (
-            <div className="flex flex-col gap-8">
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold text-amber-canopy uppercase tracking-widest">
-                  Audit Existing Project
-                </p>
-                <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
-                  Get a readiness report
-                </h1>
-                <p className="text-text-secondary leading-relaxed">
-                  Paste a public GitHub URL. We&apos;ll fetch the repo metadata and generate an honest assessment of your stack, security posture, and top improvements.
-                </p>
-              </div>
+        <div className="flex-1 flex items-start justify-center px-4 py-8 sm:py-12">
+          <div className="w-full max-w-2xl">
 
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label
-                    htmlFor="repo-url"
-                    className="text-sm font-medium text-text-secondary"
-                  >
-                    GitHub repository URL
-                  </label>
-                  <input
-                    id="repo-url"
-                    type="url"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    placeholder="https://github.com/owner/repo"
-                    required
-                    className="w-full px-4 py-3 rounded-xl bg-forest-800 border border-forest-600 text-text-primary placeholder:text-text-muted text-sm focus:outline-none focus:border-amber-canopy/60 focus:ring-2 focus:ring-amber-canopy/20 transition-all"
-                  />
-                  <p className="text-xs text-text-muted">
-                    Works with any public GitHub repository
+            {/* ── Idle: form ──────────────────────────────────────────────────── */}
+            {phase === "idle" && (
+              <div className="flex flex-col gap-8">
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-semibold text-amber-canopy uppercase tracking-widest">
+                    Audit Existing Project
+                  </p>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
+                    Get a readiness report
+                  </h1>
+                  <p className="text-text-secondary leading-relaxed">
+                    Paste a public GitHub URL. We&apos;ll fetch the repo metadata and
+                    generate an honest assessment of your stack, security posture, and
+                    top improvements.
                   </p>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={!url.trim()}
-                  className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-canopy text-forest-950 text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy"
-                >
-                  Audit this repo
-                  <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4" aria-hidden="true">
-                    <path d="M4 8h8M8 4l4 4-4 4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              </form>
-            </div>
-          )}
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor="repo-url"
+                      className="text-sm font-medium text-text-secondary"
+                    >
+                      GitHub repository URL
+                    </label>
+                    {/* text-[16px] prevents iOS zoom on focus; sm:text-sm restores size on desktop */}
+                    <input
+                      id="repo-url"
+                      type="url"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      placeholder="https://github.com/owner/repo"
+                      required
+                      className="w-full px-4 py-3 rounded-xl bg-forest-800 border border-forest-600 text-text-primary placeholder:text-text-muted text-[16px] sm:text-sm focus:outline-none focus:border-amber-canopy/60 focus:ring-2 focus:ring-amber-canopy/20 transition-all"
+                    />
+                    <p className="text-xs text-text-muted">
+                      Works with any public GitHub repository
+                    </p>
+                  </div>
 
-          {/* ── Loading: spinner + live streaming preview ───────────────────────── */}
-          {(phase === "loading") && (
-            <div className="flex flex-col gap-6">
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full border-2 border-forest-600 border-t-amber-canopy animate-spin flex-shrink-0" />
-                <span className="text-sm text-text-secondary">
-                  {report.length === 0 ? "Fetching repo…" : "Analyzing…"}
-                </span>
-              </div>
-              {report.length > 0 && (
-                <div className="opacity-70">
-                  <BriefRenderer content={report} />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── Done: full report ───────────────────────────────────────────────── */}
-          {phase === "done" && (
-            <div className="flex flex-col gap-6">
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <p className="text-xs font-semibold text-amber-canopy uppercase tracking-widest">
-                  Audit complete
-                </p>
-                <div className="flex items-center gap-2">
-                  <CopyButton text={report} />
                   <button
-                    onClick={handleReset}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-forest-700 border border-forest-600 text-text-muted hover:text-text-primary hover:bg-forest-600 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy"
+                    type="submit"
+                    disabled={!url.trim()}
+                    className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-canopy text-forest-950 text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy"
                   >
-                    Audit another repo
+                    Audit this repo
+                    <svg
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      className="w-4 h-4"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M4 8h8M8 4l4 4-4 4"
+                        stroke="currentColor"
+                        strokeWidth="1.25"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </button>
+                </form>
+              </div>
+            )}
+
+            {/* ── Loading: spinner + live preview ─────────────────────────────── */}
+            {phase === "loading" && (
+              <div className="flex flex-col gap-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full border-2 border-forest-600 border-t-amber-canopy animate-spin flex-shrink-0" />
+                  <span className="text-sm text-text-secondary">
+                    {report.length === 0 ? "Fetching repo…" : "Analyzing…"}
+                  </span>
                 </div>
+                {report.length > 0 && (
+                  <div className="opacity-70">
+                    <BriefRenderer content={report} />
+                  </div>
+                )}
               </div>
-              <BriefRenderer content={report} />
-            </div>
-          )}
+            )}
 
-          {/* ── Error ──────────────────────────────────────────────────────────── */}
-          {phase === "error" && (
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col gap-2 p-4 rounded-xl bg-forest-800 border border-red-900/60">
-                <p className="text-sm font-semibold text-red-400">Audit failed</p>
-                <p className="text-sm text-text-secondary">{errorMsg}</p>
+            {/* ── Done: full report ────────────────────────────────────────────── */}
+            {phase === "done" && (
+              <div className="flex flex-col gap-6">
+                {/* Action bar */}
+                <div className="flex items-center justify-between flex-wrap gap-3 print:hidden">
+                  <p className="text-xs font-semibold text-amber-canopy uppercase tracking-widest">
+                    Audit complete
+                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <CopyButton text={report} label="Copy all" />
+                    <SaveButton content={report} repoUrl={url} />
+                    <ExportMenu content={report} repoName={repoName} />
+                    <button
+                      onClick={handleReset}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+                        "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy",
+                        "border-forest-600 text-text-secondary hover:bg-forest-700 hover:text-text-primary"
+                      )}
+                    >
+                      Audit another
+                    </button>
+                  </div>
+                </div>
+
+                {/* Print-only header */}
+                <div className="hidden print:block mb-4">
+                  <p className="text-lg font-bold text-black">
+                    Canopy Tech — Audit Report
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {repoName} · canopytech.app ·{" "}
+                    {new Date().toLocaleDateString()}
+                  </p>
+                </div>
+
+                {/* Sectioned report with per-section copy */}
+                <div className="bg-forest-900 border border-forest-700 rounded-2xl p-5 sm:p-8 shadow-xl print:shadow-none print:border-gray-200 print:rounded-none audit-content">
+                  <SectionedReport content={report} />
+                </div>
+
+                {/* Fix-it prompt */}
+                <FixItPromptCard prompt={fixItPrompt} />
               </div>
-              <button
-                onClick={handleReset}
-                className="self-start flex items-center gap-2 px-4 py-2 rounded-xl bg-forest-700 border border-forest-600 text-sm font-medium text-text-secondary hover:text-text-primary transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy"
-              >
-                Try again
-              </button>
-            </div>
-          )}
+            )}
 
+            {/* ── Error ───────────────────────────────────────────────────────── */}
+            {phase === "error" && (
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2 p-4 rounded-xl bg-forest-800 border border-red-900/60">
+                  <p className="text-sm font-semibold text-red-400">
+                    Audit failed
+                  </p>
+                  <p className="text-sm text-text-secondary">{errorMsg}</p>
+                </div>
+                <button
+                  onClick={handleReset}
+                  className="self-start flex items-center gap-2 px-4 py-2 rounded-xl bg-forest-700 border border-forest-600 text-sm font-medium text-text-secondary hover:text-text-primary transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy"
+                >
+                  Try again
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }
