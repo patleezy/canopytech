@@ -23,10 +23,10 @@ function downloadText(content: string, filename: string) {
 
 function markdownToPlainText(md: string): string {
   return md
-    // H3 headings → uppercase + double underline
-    .replace(/^### (.+)$/gm, (_, t) => `${t.toUpperCase()}\n${"═".repeat(t.replace(/\p{Emoji}/gu, "").trim().length)}`)
-    // H4 headings → uppercase + single underline, with leading newline
-    .replace(/^#### (.+)$/gm, (_, t) => `\n${t.toUpperCase()}\n${"─".repeat(Math.min(t.replace(/\p{Emoji}/gu, "").trim().length, 40))}`)
+    // H3 headings → uppercase with blank lines around
+    .replace(/^### (.+)$/gm, (_, t) => `\n\n${t.toUpperCase()}\n`)
+    // H4 sub-headings → uppercase with blank line before
+    .replace(/^#### (.+)$/gm, (_, t) => `\n${t.toUpperCase()}\n`)
     // Bold and italic — strip markers, keep text
     .replace(/\*{1,2}([^*\n]+)\*{1,2}/g, "$1")
     // Fenced code blocks — keep content, drop fences
@@ -43,8 +43,8 @@ function markdownToPlainText(md: string): string {
         .filter(Boolean)
         .join("   ")
     )
-    // Horizontal rules
-    .replace(/^---+$/gm, "────────────────────────────────────────")
+    // Horizontal rules → single blank line
+    .replace(/^---+$/gm, "")
     // Collapse 3+ blank lines to 2
     .replace(/\n{3,}/g, "\n\n")
     .trim();
