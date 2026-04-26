@@ -3,11 +3,13 @@
 import { useState, useRef, useEffect } from "react";
 import { BriefRenderer } from "@/components/brief/BriefRenderer";
 import { saveAudit } from "@/lib/saved-briefs";
+import { decodeShare, buildShareUrl } from "@/lib/share";
 import { cn } from "@/lib/utils";
 
 const SESSION_KEY = "canopy_audit";
 
 type Phase = "idle" | "loading" | "done" | "error";
+type InputMode = "github" | "manual";
 
 // ── Export helpers ────────────────────────────────────────────────────────────
 
@@ -272,6 +274,30 @@ function ExportMenu({ content, repoName }: { content: string; repoName: string }
   );
 }
 
+function ShareButton({ url, report }: { url: string; report: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={async () => {
+        const payload = JSON.stringify({ u: url, c: report });
+        const shareUrl = buildShareUrl("/audit", payload);
+        await navigator.clipboard.writeText(shareUrl).catch(() => {});
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }}
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy",
+        copied
+          ? "border-amber-canopy text-amber-canopy bg-amber-canopy/10"
+          : "border-forest-600 text-text-secondary hover:bg-forest-700 hover:text-text-primary"
+      )}
+    >
+      {copied ? "✓ Link copied" : "Share"}
+    </button>
+  );
+}
+
 // Per-section rendering with hover copy button
 function SectionedReport({ content }: { content: string }) {
   const parts = splitSections(content);
@@ -356,14 +382,34 @@ function FixItPromptCard({ prompt }: { prompt: string }) {
 
 export default function AuditPage() {
   const [phase, setPhase] = useState<Phase>("idle");
+  const [inputMode, setInputMode] = useState<InputMode>("github");
   const [url, setUrl] = useState("");
+  const [description, setDescription] = useState("");
+  const [codeContext, setCodeContext] = useState("");
   const [report, setReport] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const isSubmitting = useRef(false);
 
-  // Restore from sessionStorage on mount (covers same-session navigation and
-  // landing-page "View audit" resume flow)
   useEffect(() => {
+    // Check for share link hash first (#s=BASE64)
+    const hash = window.location.hash;
+    if (hash.startsWith("#s=")) {
+      try {
+        const decoded = decodeShare(hash.slice(3));
+        if (decoded) {
+          const parsed = JSON.parse(decoded) as { u: string; c: string };
+          history.replaceState(null, "", window.location.pathname);
+          setUrl(parsed.u ?? "");
+          setReport(parsed.c ?? "");
+          setPhase("done");
+          return;
+        }
+      } catch {
+        // fall through to sessionStorage
+      }
+    }
+
+    // Restore from sessionStorage (same-session navigation + landing "View" resume)
     try {
       const raw = sessionStorage.getItem(SESSION_KEY);
       if (raw) {
@@ -379,17 +425,24 @@ export default function AuditPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting.current || !url.trim()) return;
+    const isManual = inputMode === "manual";
+    if (isSubmitting.current) return;
+    if (isManual && !description.trim()) return;
+    if (!isManual && !url.trim()) return;
     isSubmitting.current = true;
     setPhase("loading");
     setReport("");
     setErrorMsg("");
 
     try {
+      const body = isManual
+        ? { mode: "manual", description: description.trim(), codeContext: codeContext.trim() || undefined }
+        : { mode: "github", repoUrl: url.trim() };
+
       const res = await fetch("/api/audit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ repoUrl: url.trim() }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -412,7 +465,8 @@ export default function AuditPage() {
         }
       }
 
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ url: url.trim(), content: accumulated }));
+      const sessionUrl = isManual ? "" : url.trim();
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ url: sessionUrl, content: accumulated }));
       setPhase("done");
     } catch {
       setErrorMsg("Network error — please check your connection and try again.");
@@ -426,16 +480,16 @@ export default function AuditPage() {
     sessionStorage.removeItem(SESSION_KEY);
     setPhase("idle");
     setUrl("");
+    setDescription("");
+    setCodeContext("");
     setReport("");
     setErrorMsg("");
   };
 
   const repoName =
     url
-      .replace(/^https?:\/\/github\.com\//, "")
-      .split("/")
-      .slice(0, 2)
-      .join("/") || "repo";
+      ? url.replace(/^https?:\/\/github\.com\//, "").split("/").slice(0, 2).join("/") || "repo"
+      : description.slice(0, 40) || "manual-audit";
 
   const fixItPrompt =
     phase === "done" ? buildFixItPrompt(report, url) : "";
@@ -467,55 +521,88 @@ export default function AuditPage() {
                   <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
                     Get a readiness report
                   </h1>
-                  <p className="text-text-secondary leading-relaxed">
-                    Paste a public GitHub URL. We&apos;ll fetch the repo metadata and
-                    generate an honest assessment of your stack, security posture, and
-                    top improvements.
-                  </p>
+                </div>
+
+                {/* Mode tabs */}
+                <div className="flex gap-1 p-1 bg-forest-800 border border-forest-700 rounded-xl self-start">
+                  {(["github", "manual"] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setInputMode(m)}
+                      className={cn(
+                        "px-4 py-1.5 rounded-lg text-sm font-medium transition-all",
+                        inputMode === m
+                          ? "bg-amber-canopy text-forest-950"
+                          : "text-text-secondary hover:text-text-primary"
+                      )}
+                    >
+                      {m === "github" ? "GitHub URL" : "Describe manually"}
+                    </button>
+                  ))}
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      htmlFor="repo-url"
-                      className="text-sm font-medium text-text-secondary"
-                    >
-                      GitHub repository URL
-                    </label>
-                    {/* text-[16px] prevents iOS zoom on focus; sm:text-sm restores size on desktop */}
-                    <input
-                      id="repo-url"
-                      type="url"
-                      value={url}
-                      onChange={(e) => setUrl(e.target.value)}
-                      placeholder="https://github.com/owner/repo"
-                      required
-                      className="w-full px-4 py-3 rounded-xl bg-forest-800 border border-forest-600 text-text-primary placeholder:text-text-muted text-[16px] sm:text-sm focus:outline-none focus:border-amber-canopy/60 focus:ring-2 focus:ring-amber-canopy/20 transition-all"
-                    />
-                    <p className="text-xs text-text-muted">
-                      Works with any public GitHub repository
-                    </p>
-                  </div>
+                  {inputMode === "github" ? (
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="repo-url" className="text-sm font-medium text-text-secondary">
+                        GitHub repository URL
+                      </label>
+                      {/* text-[16px] prevents iOS zoom on focus */}
+                      <input
+                        id="repo-url"
+                        type="url"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        placeholder="https://github.com/owner/repo"
+                        required
+                        className="w-full px-4 py-3 rounded-xl bg-forest-800 border border-forest-600 text-text-primary placeholder:text-text-muted text-[16px] sm:text-sm focus:outline-none focus:border-amber-canopy/60 focus:ring-2 focus:ring-amber-canopy/20 transition-all"
+                      />
+                      <p className="text-xs text-text-muted">Works with any public GitHub repository</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor="description" className="text-sm font-medium text-text-secondary">
+                          Describe your project
+                        </label>
+                        <textarea
+                          id="description"
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value.slice(0, 2000))}
+                          placeholder="e.g. A React + Express SaaS app with PostgreSQL. We handle payments via Stripe and auth via JWT. Currently on a single DigitalOcean droplet."
+                          required
+                          rows={4}
+                          className="w-full px-4 py-3 rounded-xl bg-forest-800 border border-forest-600 text-text-primary placeholder:text-text-muted text-[16px] sm:text-sm focus:outline-none focus:border-amber-canopy/60 focus:ring-2 focus:ring-amber-canopy/20 transition-all resize-none"
+                        />
+                        <p className="text-xs text-text-muted text-right">{description.length}/2000</p>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor="code-context" className="text-sm font-medium text-text-secondary">
+                          Paste relevant code or config{" "}
+                          <span className="font-normal text-text-muted">(optional)</span>
+                        </label>
+                        <textarea
+                          id="code-context"
+                          value={codeContext}
+                          onChange={(e) => setCodeContext(e.target.value.slice(0, 3000))}
+                          placeholder="package.json, docker-compose.yml, schema, etc."
+                          rows={5}
+                          className="w-full px-4 py-3 rounded-xl bg-forest-800 border border-forest-600 text-text-primary placeholder:text-text-muted font-mono text-[16px] sm:text-sm focus:outline-none focus:border-amber-canopy/60 focus:ring-2 focus:ring-amber-canopy/20 transition-all resize-none"
+                        />
+                        <p className="text-xs text-text-muted text-right">{codeContext.length}/3000</p>
+                      </div>
+                    </div>
+                  )}
 
                   <button
                     type="submit"
-                    disabled={!url.trim()}
+                    disabled={inputMode === "github" ? !url.trim() : !description.trim()}
                     className="self-start flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-canopy text-forest-950 text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy"
                   >
-                    Audit this repo
-                    <svg
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      className="w-4 h-4"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M4 8h8M8 4l4 4-4 4"
-                        stroke="currentColor"
-                        strokeWidth="1.25"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
+                    {inputMode === "github" ? "Audit this repo" : "Audit this project"}
+                    <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4" aria-hidden="true">
+                      <path d="M4 8h8M8 4l4 4-4 4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
                 </form>
@@ -550,6 +637,7 @@ export default function AuditPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <CopyButton text={report} label="Copy all" />
                     <SaveButton content={report} repoUrl={url} />
+                    <ShareButton url={url} report={report} />
                     <ExportMenu content={report} repoName={repoName} />
                     <button
                       onClick={handleReset}
