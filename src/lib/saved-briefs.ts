@@ -1,5 +1,10 @@
-const STORAGE_KEY = "canopy_saved_brief";
-const AUDIT_STORAGE_KEY = "canopy_saved_audit";
+// New plural keys (arrays). Legacy single-item keys are migrated on first load.
+const BRIEFS_KEY = "canopy_saved_briefs";
+const AUDITS_KEY = "canopy_saved_audits";
+const LEGACY_BRIEF_KEY = "canopy_saved_brief";
+const LEGACY_AUDIT_KEY = "canopy_saved_audit";
+
+const MAX_SAVED = 10;
 
 export interface SavedBrief {
   id: string;
@@ -21,6 +26,8 @@ function extractProjectName(content: string): string {
   return "Untitled project";
 }
 
+// ── Briefs ────────────────────────────────────────────────────────────────────
+
 export function saveBrief(content: string): SavedBrief {
   const brief: SavedBrief = {
     id: Math.random().toString(36).slice(2, 9),
@@ -29,30 +36,43 @@ export function saveBrief(content: string): SavedBrief {
     content,
   };
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(brief));
+    const existing = loadSavedBriefs();
+    localStorage.setItem(BRIEFS_KEY, JSON.stringify([brief, ...existing].slice(0, MAX_SAVED)));
   } catch {
     // Storage quota exceeded or unavailable
   }
   return brief;
 }
 
-export function loadSavedBrief(): SavedBrief | null {
+export function loadSavedBriefs(): SavedBrief[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as SavedBrief;
+    const raw = localStorage.getItem(BRIEFS_KEY);
+    if (raw) return JSON.parse(raw) as SavedBrief[];
+
+    // Migrate legacy single-item key on first access
+    const legacy = localStorage.getItem(LEGACY_BRIEF_KEY);
+    if (legacy) {
+      const items = [JSON.parse(legacy) as SavedBrief];
+      localStorage.setItem(BRIEFS_KEY, JSON.stringify(items));
+      localStorage.removeItem(LEGACY_BRIEF_KEY);
+      return items;
+    }
+    return [];
   } catch {
-    return null;
+    return [];
   }
 }
 
-export function clearSavedBrief(): void {
+export function removeSavedBrief(id: string): void {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    const updated = loadSavedBriefs().filter((b) => b.id !== id);
+    localStorage.setItem(BRIEFS_KEY, JSON.stringify(updated));
   } catch {
     // ignore
   }
 }
+
+// ── Audits ────────────────────────────────────────────────────────────────────
 
 export function saveAudit(content: string, repoUrl: string): SavedAudit {
   const audit: SavedAudit = {
@@ -62,30 +82,43 @@ export function saveAudit(content: string, repoUrl: string): SavedAudit {
     content,
   };
   try {
-    localStorage.setItem(AUDIT_STORAGE_KEY, JSON.stringify(audit));
+    const existing = loadSavedAudits();
+    localStorage.setItem(AUDITS_KEY, JSON.stringify([audit, ...existing].slice(0, MAX_SAVED)));
   } catch {
     // Storage quota exceeded or unavailable
   }
   return audit;
 }
 
-export function loadSavedAudit(): SavedAudit | null {
+export function loadSavedAudits(): SavedAudit[] {
   try {
-    const raw = localStorage.getItem(AUDIT_STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as SavedAudit;
+    const raw = localStorage.getItem(AUDITS_KEY);
+    if (raw) return JSON.parse(raw) as SavedAudit[];
+
+    // Migrate legacy single-item key on first access
+    const legacy = localStorage.getItem(LEGACY_AUDIT_KEY);
+    if (legacy) {
+      const items = [JSON.parse(legacy) as SavedAudit];
+      localStorage.setItem(AUDITS_KEY, JSON.stringify(items));
+      localStorage.removeItem(LEGACY_AUDIT_KEY);
+      return items;
+    }
+    return [];
   } catch {
-    return null;
+    return [];
   }
 }
 
-export function clearSavedAudit(): void {
+export function removeSavedAudit(id: string): void {
   try {
-    localStorage.removeItem(AUDIT_STORAGE_KEY);
+    const updated = loadSavedAudits().filter((a) => a.id !== id);
+    localStorage.setItem(AUDITS_KEY, JSON.stringify(updated));
   } catch {
     // ignore
   }
 }
+
+// ── Shared ────────────────────────────────────────────────────────────────────
 
 export function formatSavedDate(ts: number): string {
   const diff = Date.now() - ts;
