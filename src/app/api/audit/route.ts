@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { buildAuditPrompt, type RepoMeta } from "@/lib/build-audit-prompt";
+import { buildAuditPrompt, buildManualAuditPrompt, type RepoMeta } from "@/lib/build-audit-prompt";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -98,7 +98,7 @@ async function fetchRepoMeta(owner: string, repo: string): Promise<RepoMeta> {
 export async function POST(req: Request) {
   // ── Rate limiting ────────────────────────────────────────────────────────────
   const ip = getClientIp(req);
-  const { allowed, remaining, resetAt } = checkRateLimit(`audit:${ip}`, 5, 60_000);
+  const { allowed, remaining, resetAt } = await checkRateLimit(`audit:${ip}`, 5, 60_000);
 
   if (!allowed) {
     return new Response("Too many requests — please wait a moment.", {
@@ -135,47 +135,70 @@ export async function POST(req: Request) {
     return new Response("Invalid JSON", { status: 400 });
   }
 
-  if (!parsed || typeof parsed !== "object" || !("repoUrl" in (parsed as object))) {
-    return new Response("Missing repoUrl field", { status: 400 });
+  if (!parsed || typeof parsed !== "object") {
+    return new Response("Invalid request body", { status: 400 });
   }
 
-  const repoUrl = (parsed as { repoUrl: unknown }).repoUrl;
-  if (typeof repoUrl !== "string" || repoUrl.length > 500) {
-    return new Response("Invalid repoUrl", { status: 400 });
-  }
+  const body = parsed as Record<string, unknown>;
+  const mode = typeof body.mode === "string" ? body.mode : "github";
 
-  const parsed_url = parseGitHubUrl(repoUrl.trim());
-  if (!parsed_url) {
-    return new Response(
-      "Only public GitHub URLs are supported (e.g. https://github.com/owner/repo)",
-      { status: 400 }
-    );
-  }
+  // ── Build prompt based on mode ───────────────────────────────────────────────
+  let promptParts: { systemPrompt: string; userMessage: string };
 
-  const { owner, repo } = parsed_url;
+  if (mode === "manual") {
+    const description = body.description;
+    if (typeof description !== "string" || description.trim().length === 0) {
+      return new Response("Missing or empty description field", { status: 400 });
+    }
+    if (description.length > 2000) {
+      return new Response("description exceeds 2000 character limit", { status: 400 });
+    }
+    const codeContext = typeof body.codeContext === "string" ? body.codeContext : undefined;
+    if (codeContext && codeContext.length > 3000) {
+      return new Response("codeContext exceeds 3000 character limit", { status: 400 });
+    }
+    promptParts = buildManualAuditPrompt(description.trim(), codeContext?.trim());
+  } else {
+    // GitHub mode (default, backward-compatible)
+    const repoUrl = body.repoUrl;
+    if (typeof repoUrl !== "string" || repoUrl.length > 500) {
+      return new Response("Missing or invalid repoUrl field", { status: 400 });
+    }
 
-  // ── Fetch repo metadata ──────────────────────────────────────────────────────
-  let meta: RepoMeta;
-  try {
-    meta = await fetchRepoMeta(owner, repo);
-  } catch (err) {
-    console.error("/api/audit GitHub fetch error:", err);
-    meta = {
-      name: repo,
-      fullName: `${owner}/${repo}`,
-      description: null,
-      language: null,
-      stars: 0,
-      topics: [],
-      readme: null,
-      dependencies: null,
-      devDependencies: null,
-    };
+    const parsedUrl = parseGitHubUrl(repoUrl.trim());
+    if (!parsedUrl) {
+      return new Response(
+        "Only public GitHub URLs are supported (e.g. https://github.com/owner/repo)",
+        { status: 400 }
+      );
+    }
+
+    const { owner, repo } = parsedUrl;
+
+    let meta: RepoMeta;
+    try {
+      meta = await fetchRepoMeta(owner, repo);
+    } catch (err) {
+      console.error("/api/audit GitHub fetch error:", err);
+      meta = {
+        name: repo,
+        fullName: `${owner}/${repo}`,
+        description: null,
+        language: null,
+        stars: 0,
+        topics: [],
+        readme: null,
+        dependencies: null,
+        devDependencies: null,
+      };
+    }
+
+    promptParts = buildAuditPrompt(meta);
   }
 
   // ── Call Claude ──────────────────────────────────────────────────────────────
   try {
-    const { systemPrompt, userMessage } = buildAuditPrompt(meta);
+    const { systemPrompt, userMessage } = promptParts;
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 

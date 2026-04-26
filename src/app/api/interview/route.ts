@@ -20,7 +20,7 @@ function getClientIp(req: Request): string {
 export async function POST(req: Request) {
   // ── Rate limiting ────────────────────────────────────────────────────────────
   const ip = getClientIp(req);
-  const { allowed, remaining, resetAt } = checkRateLimit(ip, 10, 60_000);
+  const { allowed, remaining, resetAt } = await checkRateLimit(ip, 10, 60_000);
 
   if (!allowed) {
     return new Response("Too many requests — please wait a moment.", {
