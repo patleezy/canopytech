@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { BriefRenderer, parseSections, toSlug } from "@/components/brief/BriefRenderer";
 import { saveBrief } from "@/lib/saved-briefs";
+import { decodeShare, buildShareUrl } from "@/lib/share";
+import { restartInterviewKeepingAnswers } from "@/lib/interview-utils";
 import { cn } from "@/lib/utils";
 
 // ── Export helpers ───────────────────────────────────────────────────────────
@@ -186,6 +188,31 @@ function AnchorChips({ sections }: { sections: { title: string; slug: string }[]
   );
 }
 
+// ── Share button ─────────────────────────────────────────────────────────────
+
+function ShareButton({ content }: { content: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={async () => {
+        const url = buildShareUrl("/brief", content);
+        await navigator.clipboard.writeText(url).catch(() => {});
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }}
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy",
+        copied
+          ? "border-amber-canopy text-amber-canopy bg-amber-canopy/10"
+          : "border-forest-600 text-text-secondary hover:bg-forest-700 hover:text-text-primary"
+      )}
+    >
+      {copied ? "✓ Link copied" : "Share"}
+    </button>
+  );
+}
+
 // ── Save button ──────────────────────────────────────────────────────────────
 
 function SaveButton({ content }: { content: string }) {
@@ -220,6 +247,20 @@ export default function BriefPage() {
   const [projectName, setProjectName] = useState("My Project");
 
   useEffect(() => {
+    // Check for share link hash first (#s=BASE64)
+    const hash = window.location.hash;
+    if (hash.startsWith("#s=")) {
+      const decoded = decodeShare(hash.slice(3));
+      if (decoded) {
+        history.replaceState(null, "", window.location.pathname);
+        setBrief(decoded);
+        setSections(parseSections(decoded));
+        const match = decoded.match(/\*\*Project:\*\*\s*(.+)/);
+        if (match?.[1]) setProjectName(match[1].trim().slice(0, 60));
+        return;
+      }
+    }
+
     const stored = sessionStorage.getItem("canopy_brief");
     if (!stored) {
       router.replace("/");
@@ -253,10 +294,24 @@ export default function BriefPage() {
           </a>
 
           {/* Action bar */}
-          <div className="brief-export-bar flex items-center gap-2">
+          <div className="brief-export-bar flex items-center gap-2 flex-wrap">
             <CopyButton content={brief} label="Copy all" />
             <SaveButton content={brief} />
+            <ShareButton content={brief} />
             <ExportMenu content={brief} projectName={projectName} />
+            <button
+              onClick={() => {
+                restartInterviewKeepingAnswers();
+                router.push("/interview");
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy",
+                "border-forest-600 text-text-secondary hover:bg-forest-700 hover:text-text-primary"
+              )}
+            >
+              Edit answers
+            </button>
             <a
               href="/interview"
               onClick={() => sessionStorage.removeItem("canopy_brief")}

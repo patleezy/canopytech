@@ -1,10 +1,7 @@
 /**
- * In-process rate limiter. Works in dev and single-instance deployments.
- * On Vercel (serverless), each cold start gets a fresh Map — use Vercel KV
- * or Upstash Redis in Sprint 3 for global rate limiting.
- *
- * Defense-in-depth: even without global state, this limits abuse within
- * a single warm instance window and deters casual hammering.
+ * Rate limiter with optional Upstash Redis backend.
+ * If UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are set, uses Redis for
+ * persistent limits across serverless instances. Falls back to in-process Map.
  */
 
 interface Bucket {
@@ -14,7 +11,6 @@ interface Bucket {
 
 const store = new Map<string, Bucket>();
 
-// Prune stale entries every 5 minutes to avoid memory leaks
 if (typeof setInterval !== "undefined") {
   setInterval(() => {
     const now = Date.now();
@@ -24,16 +20,10 @@ if (typeof setInterval !== "undefined") {
   }, 5 * 60 * 1000);
 }
 
-/**
- * Returns true if the request is allowed, false if rate limited.
- * @param key      Identifier (IP address, session ID, etc.)
- * @param limit    Max requests per window
- * @param windowMs Window duration in milliseconds
- */
-export function checkRateLimit(
+function inMemoryCheck(
   key: string,
-  limit = 10,
-  windowMs = 60_000
+  limit: number,
+  windowMs: number
 ): { allowed: boolean; remaining: number; resetAt: number } {
   const now = Date.now();
   const existing = store.get(key);
@@ -49,9 +39,58 @@ export function checkRateLimit(
   }
 
   existing.count++;
-  return {
-    allowed: true,
-    remaining: limit - existing.count,
-    resetAt: existing.resetAt,
-  };
+  return { allowed: true, remaining: limit - existing.count, resetAt: existing.resetAt };
+}
+
+async function upstashCheck(
+  key: string,
+  limit: number,
+  windowSecs: number,
+  url: string,
+  token: string
+): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
+  const now = Date.now();
+  const resetAt = now + windowSecs * 1000;
+
+  try {
+    const res = await fetch(`${url}/pipeline`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify([
+        ["INCR", key],
+        ["EXPIRE", key, windowSecs],
+      ]),
+    });
+
+    if (!res.ok) return inMemoryCheck(key, limit, windowSecs * 1000);
+
+    const data = (await res.json()) as [[null, number], [null, number]];
+    const count = data[0][1];
+
+    return {
+      allowed: count <= limit,
+      remaining: Math.max(0, limit - count),
+      resetAt,
+    };
+  } catch {
+    return inMemoryCheck(key, limit, windowSecs * 1000);
+  }
+}
+
+export async function checkRateLimit(
+  key: string,
+  limit = 10,
+  windowMs = 60_000
+): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (redisUrl && redisToken) {
+    return upstashCheck(key, limit, Math.ceil(windowMs / 1000), redisUrl, redisToken);
+  }
+
+  return inMemoryCheck(key, limit, windowMs);
 }
