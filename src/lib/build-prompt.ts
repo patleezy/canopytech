@@ -1,4 +1,5 @@
 import { QUESTIONS } from "./interview-data";
+import AI_MODELS, { formatAiEngineRule } from "./ai-models";
 import type { AnswerMap } from "@/types/interview";
 
 export function buildPrompt(answers: AnswerMap): {
@@ -56,7 +57,7 @@ Generate the Full Project Brief in this exact markdown format:
 
 Rules for stack:
 - Always provide primary recommendation AND one alternative from a different ecosystem
-- AI Engine: Route to Claude Sonnet 4.6 (claude-sonnet-4-6) for reasoning-heavy features, Gemini 2.5 Flash (gemini-2.5-flash) for cost-sensitive or long-context features, GPT-4o (gpt-4o) as an OpenAI-ecosystem alternative
+${formatAiEngineRule(AI_MODELS)}
 - Never recommend paid tier when free tier is sufficient for stated scale
 - If user has existing accounts, prioritize ecosystem fit
 
