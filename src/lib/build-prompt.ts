@@ -56,7 +56,7 @@ Generate the Full Project Brief in this exact markdown format:
 
 Rules for stack:
 - Always provide primary recommendation AND one alternative from a different ecosystem
-- AI Engine: Route to Claude Sonnet for reasoning-heavy features, Gemini Flash for cost-sensitive or long-context features
+- AI Engine: Route to Claude Sonnet 4.6 (claude-sonnet-4-6) for reasoning-heavy features, Gemini 2.5 Flash (gemini-2.5-flash) for cost-sensitive or long-context features, GPT-4o (gpt-4o) as an OpenAI-ecosystem alternative
 - Never recommend paid tier when free tier is sufficient for stated scale
 - If user has existing accounts, prioritize ecosystem fit
 
