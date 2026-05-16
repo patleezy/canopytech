@@ -17,7 +17,10 @@ export default function InterviewPage() {
             Canopy Tech
           </span>
         </a>
-        <span className="text-xs text-text-muted">Pre-Build Interview</span>
+        <div className="flex items-center gap-4">
+          <a href="/overview" className="text-xs text-text-muted hover:text-text-secondary transition-colors hidden sm:block">Overview</a>
+          <span className="text-xs text-text-muted">Pre-Build Interview</span>
+        </div>
       </header>
 
       {/* Interview content */}

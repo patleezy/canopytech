@@ -17,7 +17,10 @@ export default function QuickPage() {
             Canopy Tech
           </span>
         </a>
-        <span className="text-xs text-text-muted">Quick Stack</span>
+        <div className="flex items-center gap-4">
+          <a href="/overview" className="text-xs text-text-muted hover:text-text-secondary transition-colors hidden sm:block">Overview</a>
+          <span className="text-xs text-text-muted">Quick Stack</span>
+        </div>
       </header>
 
       <div className="flex-1 flex items-start justify-center px-4 py-12 sm:py-16">

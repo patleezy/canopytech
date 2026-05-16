@@ -19,9 +19,9 @@ export default function HomePage() {
             Canopy Tech
           </span>
         </div>
-        <span className="text-xs text-text-muted hidden sm:block">
-          canopytech.app
-        </span>
+        <a href="/overview" className="text-xs text-text-muted hover:text-text-secondary transition-colors hidden sm:block">
+          Overview
+        </a>
       </header>
 
       {/* Hero */}
