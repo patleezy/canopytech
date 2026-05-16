@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { QuickForm } from "./QuickForm";
+import { QuickShell } from "./QuickShell";
 
 export const metadata: Metadata = {
   title: "Quick Stack — Canopy Tech",
-  description: "Describe your app in a sentence and get an instant tech stack recommendation.",
+  description:
+    "Describe your app in a sentence and get an instant tech stack recommendation.",
 };
 
 export default function QuickPage() {
@@ -19,24 +20,8 @@ export default function QuickPage() {
         <span className="text-xs text-text-muted">Quick Stack</span>
       </header>
 
-      <div className="flex-1 flex items-start justify-center px-4 py-12 sm:py-20">
-        <div className="w-full max-w-xl flex flex-col gap-8">
-          <div className="flex flex-col gap-3">
-            <h1 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">
-              What are we building?
-            </h1>
-            <p className="text-sm text-text-muted leading-relaxed">
-              Describe your app in a sentence or two and get an instant stack recommendation.
-              For compliance flags, cost estimates, and enterprise readiness,{" "}
-              <a href="/interview" className="text-amber-canopy hover:text-amber-canopy-light transition-colors underline underline-offset-2">
-                take the full consultation
-              </a>
-              .
-            </p>
-          </div>
-
-          <QuickForm />
-        </div>
+      <div className="flex-1 flex items-start justify-center px-4 py-12 sm:py-16">
+        <QuickShell />
       </div>
     </main>
   );
@@ -52,7 +37,12 @@ function CanopyLogo({ className }: { className?: string }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path d="M9.5 19h5M10 22h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path
+        d="M9.5 19h5M10 22h4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
