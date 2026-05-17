@@ -19,9 +19,9 @@ export default function HomePage() {
             Canopy Tech
           </span>
         </div>
-        <span className="text-xs text-text-muted hidden sm:block">
-          canopytech.app
-        </span>
+        <a href="/overview" className="text-xs text-text-muted hover:text-text-secondary transition-colors hidden sm:block">
+          Overview
+        </a>
       </header>
 
       {/* Hero */}
@@ -71,8 +71,33 @@ export default function HomePage() {
           </div>
 
           {/* CTA Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mt-2">
-            {/* Start New Project */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full mt-2">
+            {/* Quick Stack */}
+            <Link
+              href="/quick"
+              className="group relative flex flex-col gap-4 p-6 rounded-2xl bg-forest-800 border border-forest-600 text-left transition-all duration-300 hover:bg-forest-750 hover:border-amber-canopy/60 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(217,119,6,0.15),0_0_0_1px_rgba(217,119,6,0.1)]"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 rounded-xl bg-amber-canopy/10 border border-amber-canopy/20 flex items-center justify-center">
+                  <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5 text-amber-canopy" aria-hidden="true">
+                    <path d="M10 3l1.5 4.5H16l-3.75 2.75 1.5 4.5L10 12l-3.75 2.75 1.5-4.5L4 7.5h4.5L10 3z" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4 text-text-muted group-hover:text-amber-canopy transition-colors" aria-hidden="true">
+                  <path d="M4 8h8M8 4l4 4-4 4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-base font-semibold text-text-primary">Quick Stack</span>
+                <span className="text-sm text-text-secondary">One sentence → instant stack recommendation</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-text-muted">
+                <ClockIcon className="w-3.5 h-3.5" />
+                About 30 seconds
+              </div>
+            </Link>
+
+            {/* Full Consultation */}
             <Link
               href="/interview"
               className="group relative flex flex-col gap-4 p-6 rounded-2xl bg-forest-800 border border-forest-600 text-left transition-all duration-300 hover:bg-forest-750 hover:border-amber-canopy/60 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(217,119,6,0.15),0_0_0_1px_rgba(217,119,6,0.1)]"
@@ -110,10 +135,10 @@ export default function HomePage() {
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-base font-semibold text-text-primary">
-                  Start New Project
+                  Full Consultation
                 </span>
                 <span className="text-sm text-text-secondary">
-                  5-layer interview → full architecture brief
+                  18 questions → architecture brief with compliance flags
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs text-text-muted">

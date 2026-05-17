@@ -1,0 +1,53 @@
+name: Refresh AI Model Recommendations
+
+on:
+  schedule:
+    # Every Monday at 09:00 UTC
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run refresh script
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        run: npx tsx scripts/refresh-ai-models.ts
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git diff --quiet src/lib/ai-models.ts || echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Open PR if models changed
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: refresh AI model recommendations"
+          branch: chore/refresh-ai-models
+          title: "chore: refresh AI model recommendations"
+          body: |
+            Weekly automated update of AI model recommendations in `src/lib/ai-models.ts`.
+
+            Sourced via Tavily search against official provider documentation.
+
+            **Review before merging:** verify the model IDs are accurate against:
+            - https://platform.claude.com/docs/en/about-claude/models/overview
+            - https://ai.google.dev/gemini-api/docs/models
+            - https://platform.openai.com/docs/models
+          labels: dependencies
