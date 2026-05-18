@@ -102,9 +102,12 @@ export async function POST(req: Request) {
     const text =
       message.content[0]?.type === "text" ? message.content[0].text : "";
 
+    // Strip markdown code fences that smaller models sometimes add despite instructions
+    const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+
     let result: QuickResult;
     try {
-      result = JSON.parse(text) as QuickResult;
+      result = JSON.parse(cleaned) as QuickResult;
     } catch {
       return Response.json(
         { error: "Failed to parse AI response" },
