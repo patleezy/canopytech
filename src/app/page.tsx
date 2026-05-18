@@ -19,7 +19,7 @@ export default function HomePage() {
             Canopy Tech
           </span>
         </div>
-        <a href="/overview" className="text-xs text-text-muted hover:text-text-secondary transition-colors hidden sm:block">
+        <a href="/overview" className="text-xs text-text-muted hover:text-text-secondary transition-colors">
           Overview
         </a>
       </header>
@@ -198,6 +198,13 @@ export default function HomePage() {
               </div>
             </Link>
           </div>
+
+          <a
+            href="/overview"
+            className="text-xs text-text-muted hover:text-text-secondary transition-colors"
+          >
+            Learn how Canopy works →
+          </a>
         </div>
       </section>
 

@@ -118,6 +118,51 @@ export function removeSavedAudit(id: string): void {
   }
 }
 
+// ── Quick Stacks ──────────────────────────────────────────────────────────────
+
+const QUICK_STACKS_KEY = "canopy_saved_quick_stacks";
+
+export interface SavedQuickStack {
+  id: string;
+  savedAt: number;
+  description: string;
+  content: string;
+}
+
+export function saveQuickStack(description: string, content: string): SavedQuickStack {
+  const item: SavedQuickStack = {
+    id: Math.random().toString(36).slice(2, 9),
+    savedAt: Date.now(),
+    description: description.slice(0, 80),
+    content,
+  };
+  try {
+    const existing = loadSavedQuickStacks();
+    localStorage.setItem(QUICK_STACKS_KEY, JSON.stringify([item, ...existing].slice(0, MAX_SAVED)));
+  } catch {
+    // Storage quota exceeded or unavailable
+  }
+  return item;
+}
+
+export function loadSavedQuickStacks(): SavedQuickStack[] {
+  try {
+    const raw = localStorage.getItem(QUICK_STACKS_KEY);
+    return raw ? (JSON.parse(raw) as SavedQuickStack[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function removeSavedQuickStack(id: string): void {
+  try {
+    const updated = loadSavedQuickStacks().filter((s) => s.id !== id);
+    localStorage.setItem(QUICK_STACKS_KEY, JSON.stringify(updated));
+  } catch {
+    // ignore
+  }
+}
+
 // ── Shared ────────────────────────────────────────────────────────────────────
 
 export function formatSavedDate(ts: number): string {
