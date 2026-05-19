@@ -39,6 +39,51 @@ export default function OverviewPage() {
             </p>
           </section>
 
+          {/* ── How it works — 3 steps ────────────────────────────────────────── */}
+          <section className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-xs font-semibold text-amber-canopy uppercase tracking-wider">
+                How it works
+              </h2>
+              <p className="text-sm text-text-muted">From idea to ready-to-build brief in three steps.</p>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {HOW_IT_WORKS.map((step, i) => (
+                <div key={step.title} className="flex gap-5 p-5 rounded-xl bg-forest-900 border border-forest-700">
+                  <div className="flex-shrink-0 flex flex-col items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-amber-canopy/10 border border-amber-canopy/30 flex items-center justify-center text-sm font-bold text-amber-canopy">
+                      {String(i + 1).padStart(2, "0")}
+                    </div>
+                    {i < HOW_IT_WORKS.length - 1 && (
+                      <div className="w-px flex-1 min-h-[24px] bg-forest-700" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1 pb-2">
+                    <p className="text-sm font-semibold text-text-primary">{step.title}</p>
+                    <p className="text-xs text-text-secondary leading-relaxed">{step.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ── Who it's for ──────────────────────────────────────────────────── */}
+          <section className="flex flex-col gap-6">
+            <h2 className="text-xs font-semibold text-amber-canopy uppercase tracking-wider">
+              Who it&apos;s for
+            </h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {PERSONAS.map((p) => (
+                <div key={p.label} className="flex flex-col gap-2 p-5 rounded-xl bg-forest-900 border border-forest-700">
+                  <p className="text-sm font-semibold text-text-primary">{p.label}</p>
+                  <p className="text-xs text-text-secondary leading-relaxed">{p.body}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* ── Three tools ───────────────────────────────────────────────────── */}
           <section className="flex flex-col gap-6">
             <h2 className="text-xs font-semibold text-amber-canopy uppercase tracking-wider">
@@ -306,6 +351,58 @@ NEVER:
             </div>
           </section>
 
+          {/* ── What Canopy covers that others don't ─────────────────────────── */}
+          <section className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-xs font-semibold text-amber-canopy uppercase tracking-wider">
+                What Canopy covers that others don&apos;t
+              </h2>
+              <p className="text-sm text-text-muted">
+                Scaffold generators give you files. Canopy gives you a plan — before the files, and after.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {DIFFERENTIATORS.map((d) => (
+                <div key={d.title} className="flex gap-4 p-5 rounded-xl bg-forest-900 border border-forest-700">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-forest-800 border border-forest-600 flex items-center justify-center text-base">
+                    {d.emoji}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-semibold text-text-primary">{d.title}</p>
+                    <p className="text-xs text-text-secondary leading-relaxed">{d.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Comparison mini-table */}
+            <div className="rounded-xl bg-forest-900 border border-forest-700 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-forest-800">
+                      <th className="text-left px-4 py-2.5 text-text-muted font-semibold uppercase tracking-wide"></th>
+                      <th className="text-center px-4 py-2.5 text-text-muted font-semibold uppercase tracking-wide">Quick Stack</th>
+                      <th className="text-center px-4 py-2.5 text-text-muted font-semibold uppercase tracking-wide">Full Consult</th>
+                      <th className="text-center px-4 py-2.5 text-text-muted font-semibold uppercase tracking-wide">Repo Audit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {COMPARISON_ROWS.map((row, i) => (
+                      <tr key={row.feature} className={i % 2 === 1 ? "bg-forest-950/40" : ""}>
+                        <td className="px-4 py-2.5 text-text-secondary font-medium">{row.feature}</td>
+                        <td className="px-4 py-2.5 text-center">{row.quick ? <span className="text-amber-canopy">✓</span> : <span className="text-text-muted">—</span>}</td>
+                        <td className="px-4 py-2.5 text-center">{row.full ? <span className="text-amber-canopy">✓</span> : <span className="text-text-muted">—</span>}</td>
+                        <td className="px-4 py-2.5 text-center">{row.audit ? <span className="text-amber-canopy">✓</span> : <span className="text-text-muted">—</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
           {/* ── FAQ ───────────────────────────────────────────────────────────── */}
           <section className="flex flex-col gap-6">
             <h2 className="text-xs font-semibold text-amber-canopy uppercase tracking-wider">FAQ</h2>
@@ -352,6 +449,79 @@ NEVER:
 
 // ── Static data ───────────────────────────────────────────────────────────────
 
+const HOW_IT_WORKS = [
+  {
+    title: "Describe your project",
+    body: "One sentence in Quick Stack, or answer 18 structured questions in the Full Consultation. Either way takes under 5 minutes.",
+  },
+  {
+    title: "AI generates your architecture brief",
+    body: "Your answers go to Claude with a structured prompt. You get a full stack recommendation, monthly cost estimate, compliance flags, and a corporate readiness score — tailored to your specific constraints.",
+  },
+  {
+    title: "Paste the system prompt and start building",
+    body: "The brief includes a ready-to-use vibe coding system prompt. Drop it into Cursor, Claude Code, Windsurf, or your tool of choice and build with the full context already loaded.",
+  },
+];
+
+const PERSONAS = [
+  {
+    label: "Solo builder / indie hacker",
+    body: "Side project, no team, want fast decisions. Quick Stack gives you a direction in 30 seconds. Full Consultation surfaces the traps you'd otherwise hit at 1,000 users.",
+  },
+  {
+    label: "Early-stage founder",
+    body: "Building to ship. The compliance flags and corporate readiness score mean you won't discover your GDPR exposure or SSO gap after the first enterprise prospect asks about it.",
+  },
+  {
+    label: "Agency / freelancer",
+    body: "Building for clients who need to understand what they're buying. The architecture brief is a document you can hand off — stack rationale, cost projections, and a system prompt included.",
+  },
+];
+
+const DIFFERENTIATORS = [
+  {
+    emoji: "🛡️",
+    title: "Compliance flags",
+    body: "GDPR, HIPAA, and COPPA are triggered automatically from your answers — not just if you think to ask. Most tools generate files; Canopy flags the legal risks before you ship.",
+  },
+  {
+    emoji: "💸",
+    title: "Cost planning",
+    body: "Monthly cost estimates with free-tier ceilings and viral-growth projections. Knowing the ceiling before you build prevents a nasty surprise at scale.",
+  },
+  {
+    emoji: "🏢",
+    title: "Corporate readiness score",
+    body: "Five dimensions: SSO support, row-level security, compliance posture, observability, and API contracts. Surfaces the enterprise blockers that kill deals months later.",
+  },
+  {
+    emoji: "🔍",
+    title: "Retroactive audit",
+    body: "Already shipped something? Repo Audit reviews your existing stack against the same framework. VibeKit and scaffold generators only work on greenfield — Canopy works before and after.",
+  },
+  {
+    emoji: "🔓",
+    title: "No account, no limits",
+    body: "Fully free, no sign-up, no credit card, no daily cap. Every tool runs on your own session — nothing is stored server-side.",
+  },
+  {
+    emoji: "🤖",
+    title: "Tool-agnostic output",
+    body: "The system prompt works in Cursor, Claude Code, Windsurf, Copilot, or any AI coding tool. Use whatever you already have.",
+  },
+];
+
+const COMPARISON_ROWS = [
+  { feature: "Stack recommendation", quick: true, full: true, audit: false },
+  { feature: "Compliance flags (GDPR, HIPAA, COPPA)", quick: false, full: true, audit: false },
+  { feature: "Monthly cost estimate", quick: false, full: true, audit: false },
+  { feature: "Corporate readiness score", quick: false, full: true, audit: true },
+  { feature: "Vibe coding system prompt", quick: false, full: true, audit: false },
+  { feature: "Existing codebase review", quick: false, full: false, audit: true },
+  { feature: "No account required", quick: true, full: true, audit: true },
+];
+
 const CONSULTATION_STEPS = [
   {
     layer: "Layer 1 — Project Basics",
@@ -389,6 +559,10 @@ const SAMPLE_STACK = [
 ];
 
 const FAQ = [
+  {
+    q: "How is Canopy different from VibeKit or other scaffold generators?",
+    a: "Scaffold generators give you files — project structure, setup instructions, markdown for your AI agent. Canopy gives you a plan: the right stack for your constraints, compliance risks to watch, a cost model, and a readiness score. Use both: plan with Canopy, then generate your scaffold. They're not competing — they cover different moments in the build process.",
+  },
   {
     q: "Do you store my answers or the generated brief?",
     a: "No. Answers are sent to the AI and immediately discarded server-side. The brief lives in your browser's session storage and is gone when you close the tab. Nothing is logged to a database.",

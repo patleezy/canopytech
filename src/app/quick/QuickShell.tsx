@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { QuickResult } from "@/types/quick";
+import { saveQuickStack } from "@/lib/saved-briefs";
+import { cn } from "@/lib/utils";
 
 const CARD_ACCENT: Record<string, string> = {
   FRONTEND:   "border-l-amber-400",
@@ -15,6 +17,162 @@ const CARD_ACCENT: Record<string, string> = {
 
 type Phase = "idle" | "loading" | "done";
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function formatQuickResult(description: string, result: QuickResult): string {
+  const date = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const lines = [
+    "CANOPY TECH — QUICK STACK",
+    `Building: ${description}`,
+    `Generated: ${date}`,
+    "",
+    ...result.cards.flatMap((c) => [
+      c.category,
+      `  Recommendation: ${c.recommendation}`,
+      `  Rationale: ${c.rationale}`,
+      "",
+    ]),
+    result.disclaimer ?? "",
+    "",
+    "For compliance flags, cost estimates, and enterprise readiness:",
+    "canopytech.app/interview",
+  ];
+  return lines.join("\n").trim();
+}
+
+function downloadText(text: string, filename: string) {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function openEmail(text: string) {
+  const subject = encodeURIComponent("My Canopy Tech Quick Stack");
+  const body = encodeURIComponent(
+    text.length > 1_800
+      ? text.slice(0, 1_800) + "\n\n[Truncated — full version at canopytech.app/quick]"
+      : text
+  );
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+// ── CopyButton ────────────────────────────────────────────────────────────────
+
+function CopyButton({ content }: { content: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={async () => {
+        await navigator.clipboard.writeText(content).catch(() => {});
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }}
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy",
+        copied
+          ? "border-amber-canopy text-amber-canopy bg-amber-canopy/10"
+          : "border-forest-600 text-text-secondary hover:bg-forest-700 hover:text-text-primary"
+      )}
+    >
+      {copied ? "✓ Copied" : "Copy"}
+    </button>
+  );
+}
+
+// ── ExportMenu ────────────────────────────────────────────────────────────────
+
+function ExportMenu({ content, slug }: { content: string; slug: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className={cn(
+          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy",
+          open
+            ? "border-amber-canopy/60 text-text-primary bg-forest-700"
+            : "border-forest-600 text-text-secondary hover:bg-forest-700 hover:text-text-primary"
+        )}
+      >
+        Export
+        <svg viewBox="0 0 10 6" fill="none" className="w-2.5 h-2.5" aria-hidden="true">
+          <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-20 flex flex-col bg-forest-800 border border-forest-600 rounded-xl shadow-xl overflow-hidden w-44">
+          {[
+            {
+              label: "Download .txt",
+              action: () => { downloadText(content, `canopy-stack-${slug}.txt`); setOpen(false); },
+            },
+            {
+              label: "Export PDF",
+              action: () => { window.print(); setOpen(false); },
+            },
+            {
+              label: "Send via email",
+              action: () => { openEmail(content); setOpen(false); },
+            },
+          ].map(({ label, action }) => (
+            <button
+              key={label}
+              onClick={action}
+              className="flex items-center gap-2 px-4 py-2.5 text-xs text-text-secondary hover:bg-forest-700 hover:text-text-primary transition-colors text-left"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── SaveButton ────────────────────────────────────────────────────────────────
+
+function SaveButton({ description, content }: { description: string; content: string }) {
+  const [saved, setSaved] = useState(false);
+  return (
+    <button
+      onClick={() => {
+        saveQuickStack(description, content);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }}
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy",
+        saved
+          ? "border-amber-canopy text-amber-canopy bg-amber-canopy/10"
+          : "border-forest-600 text-text-secondary hover:bg-forest-700 hover:text-text-primary"
+      )}
+    >
+      {saved ? "✓ Saved" : "Save"}
+    </button>
+  );
+}
+
+// ── QuickShell ────────────────────────────────────────────────────────────────
+
 export function QuickShell() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [description, setDescription] = useState("");
@@ -25,10 +183,7 @@ export function QuickShell() {
   const tooShort = trimmed.length > 0 && trimmed.length < 10;
   const canSubmit = trimmed.length >= 10 && phase === "idle";
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!canSubmit) return;
-
+  async function runFetch(desc: string) {
     setPhase("loading");
     setError(null);
 
@@ -36,7 +191,7 @@ export function QuickShell() {
       const res = await fetch("/api/quick", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: trimmed }),
+        body: JSON.stringify({ description: desc }),
       });
 
       if (!res.ok) {
@@ -51,6 +206,16 @@ export function QuickShell() {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
       setPhase("idle");
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    await runFetch(trimmed);
+  }
+
+  async function handleRegenerate() {
+    await runFetch(trimmed);
   }
 
   function reset() {
@@ -159,7 +324,7 @@ export function QuickShell() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="flex flex-col gap-8"
+            className="flex flex-col gap-8 quick-result"
           >
             {trimmed && (
               <div className="flex flex-col gap-1">
@@ -171,9 +336,33 @@ export function QuickShell() {
             )}
 
             <div>
-              <p className="text-xs font-semibold text-amber-canopy uppercase tracking-wider mb-4">
-                AI-Recommended Stack
-              </p>
+              {/* Label + action bar */}
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <p className="text-xs font-semibold text-amber-canopy uppercase tracking-wider">
+                  AI-Recommended Stack
+                </p>
+                {(() => {
+                  const formatted = formatQuickResult(trimmed, result);
+                  const slug = trimmed.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 40);
+                  return (
+                    <div className="flex items-center gap-2 print:hidden flex-wrap">
+                      <CopyButton content={formatted} />
+                      <ExportMenu content={formatted} slug={slug} />
+                      <SaveButton description={trimmed} content={formatted} />
+                      <button
+                        onClick={handleRegenerate}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-forest-600 text-text-secondary hover:bg-forest-700 hover:text-text-primary transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-canopy"
+                      >
+                        <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3" aria-hidden="true">
+                          <path d="M1 7a6 6 0 1 0 1.5-3.9M1 3v4h4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Regenerate
+                      </button>
+                    </div>
+                  );
+                })()}
+              </div>
+
               <motion.div
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
                 initial="hidden"

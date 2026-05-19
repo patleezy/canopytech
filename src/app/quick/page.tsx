@@ -18,7 +18,7 @@ export default function QuickPage() {
           </span>
         </a>
         <div className="flex items-center gap-4">
-          <a href="/overview" className="text-xs text-text-muted hover:text-text-secondary transition-colors hidden sm:block">Overview</a>
+          <a href="/overview" className="text-xs text-text-muted hover:text-text-secondary transition-colors">Overview</a>
           <span className="text-xs text-text-muted">Quick Stack</span>
         </div>
       </header>
