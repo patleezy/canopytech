@@ -1,9 +1,7 @@
 @import "tailwindcss";
 
-@theme inline {
-  /* Midnight teal-green — iPhone 11 Pro inspired.
-     Hue shifted ~165° (teal vs pure 120° green), desaturated, near-black.
-     Reads almost black; the green-teal reveals itself under light. */
+@theme {
+  /* Midnight teal-green palette — dark mode base values */
   --color-forest-950: #060f0c;
   --color-forest-900: #091a14;
   --color-forest-800: #0d221b;
@@ -13,44 +11,85 @@
   --color-forest-500: #224e40;
   --color-forest-400: #2a5e4d;
 
-  /* Warm amber accent — unchanged, contrast pops harder on teal */
+  /* Warm amber accent */
   --color-amber-canopy: #d97706;
   --color-amber-canopy-light: #f59e0b;
   --color-amber-canopy-dim: #7c3f06;
   --color-amber-canopy-subtle: #150e00;
 
-  /* Text — WCAG AA verified on new midnight base */
-  --color-text-primary: #edf4f1;    /* ~18:1 on #060f0c */
-  --color-text-secondary: #94b8a8;  /* ~7.8:1 on #060f0c */
-  --color-text-muted: #6a8f7d;      /* ~5.4:1 on #060f0c */
-  --color-text-amber: #d97706;      /* ~6.5:1 on #060f0c */
-
-  /* Fonts */
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Text */
+  --color-text-primary: #edf4f1;
+  --color-text-secondary: #a8c8b8;
+  --color-text-muted: #7aaa96;
+  --color-text-amber: #d97706;
 }
 
+/* ── Dark mode (default) ──────────────────────────────────────────────────── */
 :root {
-  --background: #060f0c;
-  --foreground: #edf4f1;
-}
-
-html {
   color-scheme: dark;
 }
 
+/* ── Light mode ───────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --color-forest-950: #f0f8f4;
+    --color-forest-900: #e4f2ec;
+    --color-forest-800: #d4eae0;
+    --color-forest-750: #c8e2d6;
+    --color-forest-700: #b8d8ca;
+    --color-forest-600: #8bbfaa;
+    --color-forest-500: #5e9e86;
+    --color-forest-400: #3d7a62;
+    --color-text-primary: #091a12;
+    --color-text-secondary: #1e4d38;
+    --color-text-muted: #3d7060;
+    --color-amber-canopy-subtle: #fef3c7;
+  }
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --color-forest-950: #f0f8f4;
+  --color-forest-900: #e4f2ec;
+  --color-forest-800: #d4eae0;
+  --color-forest-750: #c8e2d6;
+  --color-forest-700: #b8d8ca;
+  --color-forest-600: #8bbfaa;
+  --color-forest-500: #5e9e86;
+  --color-forest-400: #3d7a62;
+  --color-text-primary: #091a12;
+  --color-text-secondary: #1e4d38;
+  --color-text-muted: #3d7060;
+  --color-amber-canopy-subtle: #fef3c7;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-forest-950: #060f0c;
+  --color-forest-900: #091a14;
+  --color-forest-800: #0d221b;
+  --color-forest-750: #102820;
+  --color-forest-700: #143028;
+  --color-forest-600: #1b3f34;
+  --color-forest-500: #224e40;
+  --color-forest-400: #2a5e4d;
+  --color-text-primary: #edf4f1;
+  --color-text-secondary: #a8c8b8;
+  --color-text-muted: #7aaa96;
+  --color-amber-canopy-subtle: #150e00;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-forest-950);
+  color: var(--color-text-primary);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Subtle film grain overlay — the iPhone backglass effect.
-   SVG feTurbulence noise, mix-blend-mode:overlay at 3% opacity.
-   Pointer-events none so it never interferes with interaction. */
-body::after {
+/* Film grain overlay — dark mode only */
+:root:not([data-theme="light"]) body::after {
   content: "";
   position: fixed;
   inset: 0;
@@ -63,7 +102,17 @@ body::after {
   background-size: 200px 200px;
 }
 
-/* Focus ring — amber, clearly visible */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) body::after {
+    display: none;
+  }
+}
+
+[data-theme="light"] body::after {
+  display: none;
+}
+
+/* Focus ring */
 :focus-visible {
   outline: 2px solid #d97706;
   outline-offset: 3px;
@@ -72,21 +121,21 @@ body::after {
 
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #091a14; }
-::-webkit-scrollbar-thumb { background: #224e40; border-radius: 3px; }
+::-webkit-scrollbar-track { background: var(--color-forest-900); }
+::-webkit-scrollbar-thumb { background: var(--color-forest-500); border-radius: 3px; }
 
 /* Brief markdown renderer */
 .brief-content h3 {
-  color: #f0f4f0;
+  color: var(--color-text-primary);
   font-size: 1.125rem;
   font-weight: 600;
   margin-top: 2rem;
   margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #172617;
+  border-bottom: 1px solid var(--color-forest-700);
 }
 .brief-content h4 {
-  color: #9eb09e;
+  color: var(--color-text-secondary);
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -95,7 +144,7 @@ body::after {
   margin-bottom: 0.5rem;
 }
 .brief-content p {
-  color: #9eb09e;
+  color: var(--color-text-secondary);
   line-height: 1.75;
   margin-bottom: 0.75rem;
 }
@@ -105,7 +154,7 @@ body::after {
   margin-bottom: 1rem;
 }
 .brief-content ul li {
-  color: #9eb09e;
+  color: var(--color-text-secondary);
   padding: 0.25rem 0 0.25rem 1.25rem;
   position: relative;
 }
@@ -124,34 +173,34 @@ body::after {
 .brief-content th {
   text-align: left;
   padding: 0.5rem 0.75rem;
-  background: #091409;
-  color: #9eb09e;
+  background: var(--color-forest-900);
+  color: var(--color-text-secondary);
   font-weight: 700;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  border: 1px solid #172617;
+  border: 1px solid var(--color-forest-700);
 }
 .brief-content td {
   padding: 0.625rem 0.75rem;
-  color: #f0f4f0;
-  border: 1px solid #172617;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-forest-700);
   vertical-align: top;
   line-height: 1.5;
 }
-.brief-content tr:nth-child(even) td { background: #060e06; }
+.brief-content tr:nth-child(even) td { background: var(--color-forest-900); }
 .brief-content code {
   font-family: var(--font-geist-mono), monospace;
-  background: #091409;
-  border: 1px solid #172617;
+  background: var(--color-forest-900);
+  border: 1px solid var(--color-forest-700);
   padding: 0.125rem 0.375rem;
   border-radius: 4px;
   font-size: 0.8125rem;
   color: #d97706;
 }
 .brief-content pre {
-  background: #060e06;
-  border: 1px solid #172617;
+  background: var(--color-forest-900);
+  border: 1px solid var(--color-forest-700);
   border-radius: 8px;
   padding: 1rem 1.25rem;
   overflow-x: auto;
@@ -161,25 +210,17 @@ body::after {
   background: none;
   border: none;
   padding: 0;
-  color: #9eb09e;
+  color: var(--color-text-secondary);
 }
-.brief-content hr { border: none; border-top: 1px solid #172617; margin: 1.5rem 0; }
-.brief-content strong { color: #f0f4f0; font-weight: 600; }
+.brief-content hr { border: none; border-top: 1px solid var(--color-forest-700); margin: 1.5rem 0; }
+.brief-content strong { color: var(--color-text-primary); font-weight: 600; }
 
 /* ── Print / PDF styles ─────────────────────────────────────────────────── */
 @media print {
-  /* Force light color-scheme — overrides html { color-scheme: dark } so iOS
-     Safari and Chrome render white backgrounds instead of the dark theme */
   html { color-scheme: light; background: #fff !important; }
   body { background: #fff !important; color: #111 !important; }
-
-  /* Remove grain overlay */
   body::after { display: none !important; }
-
-  /* Hide chrome — nav, export bar, CTA footer */
   header, .brief-export-bar, .brief-cta-footer, .brief-nav-chips { display: none !important; }
-
-  /* Remove background colors from brief elements */
   .brief-content th { background: #f5f5f5 !important; color: #333 !important; }
   .brief-content td { color: #111 !important; }
   .brief-content tr:nth-child(even) td { background: #fafafa !important; }
@@ -192,17 +233,9 @@ body::after {
   .brief-content pre code { color: #333 !important; }
   .brief-content ul li::before { color: #b45309 !important; }
   .brief-content blockquote { border-left-color: #b45309 !important; color: #555 !important; }
-
-  /* Full width, no card shadow */
   .brief-card { background: none !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
-
-  /* Avoid page breaks inside tables */
   table, tr, td, th { page-break-inside: avoid; }
-
-  /* Ensure links print with URL */
   a[href]::after { content: " (" attr(href) ")"; font-size: 0.75em; color: #666; }
-
-  /* Audit report — same ink-friendly treatment as brief */
   .audit-content { background: none !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
   .audit-content * { color: #111 !important; background-color: transparent !important; border-color: #ccc !important; }
   .audit-content th { background: #f5f5f5 !important; color: #333 !important; }

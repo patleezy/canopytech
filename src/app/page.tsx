@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SavedBriefBanner, SavedAuditBanner } from "@/components/landing/SavedBriefBanner";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const metadata: Metadata = {
   title: "Canopy Tech — Build on solid ground",
@@ -19,9 +20,12 @@ export default function HomePage() {
             Canopy Tech
           </span>
         </div>
-        <a href="/overview" className="text-xs text-text-muted hover:text-text-secondary transition-colors">
-          Overview
-        </a>
+        <div className="flex items-center gap-2">
+          <a href="/overview" className="text-xs text-text-muted hover:text-text-secondary transition-colors px-2 py-1">
+            Overview
+          </a>
+          <ThemeToggle />
+        </div>
       </header>
 
       {/* Hero */}
@@ -201,9 +205,12 @@ export default function HomePage() {
 
           <a
             href="/overview"
-            className="text-xs text-text-muted hover:text-text-secondary transition-colors"
+            className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl border border-forest-600 text-sm text-text-secondary hover:border-forest-400 hover:text-text-primary hover:bg-forest-800/60 transition-all"
           >
-            Learn how Canopy works →
+            Learn how Canopy works
+            <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5" aria-hidden="true">
+              <path d="M4 8h8M8 4l4 4-4 4" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </a>
         </div>
       </section>
