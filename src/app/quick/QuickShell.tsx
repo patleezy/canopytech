@@ -384,7 +384,7 @@ export function QuickShell() {
                     <span className="text-sm font-semibold text-text-primary leading-snug">
                       {card.recommendation}
                     </span>
-                    <span className="text-xs text-text-secondary leading-relaxed line-clamp-2">
+                    <span className="text-xs text-text-secondary leading-relaxed">
                       {card.rationale}
                     </span>
                   </motion.div>
