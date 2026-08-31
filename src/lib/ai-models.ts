@@ -1,6 +1,6 @@
 // Current AI model recommendations — updated periodically by scripts/refresh-ai-models.ts
 // Do not edit by hand; run `npx tsx scripts/refresh-ai-models.ts` to refresh.
-// Last updated: 2026-07-02
+// Last updated: 2026-08-31
 
 export interface ModelOption {
   name: string;
@@ -16,10 +16,10 @@ export interface AiModelRecommendations {
 }
 
 const AI_MODELS: AiModelRecommendations = {
-  updatedAt: "2026-07-02",
+  updatedAt: "2026-08-31",
   reasoning: {
-    name: "Claude Opus 4.8",
-    id: "claude-opus-4-8",
+    name: "Claude Haiku 4.5",
+    id: "claude-haiku-4-5-20251001",
     useCase: "reasoning-heavy features",
   },
   costEffective: {
