@@ -1,6 +1,6 @@
 // Current AI model recommendations — updated periodically by scripts/refresh-ai-models.ts
 // Do not edit by hand; run `npx tsx scripts/refresh-ai-models.ts` to refresh.
-// Last updated: 2026-07-02
+// Last updated: 2026-10-12
 
 export interface ModelOption {
   name: string;
@@ -16,20 +16,20 @@ export interface AiModelRecommendations {
 }
 
 const AI_MODELS: AiModelRecommendations = {
-  updatedAt: "2026-07-02",
+  updatedAt: "2026-10-12",
   reasoning: {
-    name: "Claude Opus 4.8",
-    id: "claude-opus-4-8",
+    name: "Claude Haiku 4.5",
+    id: "claude-haiku-4-5-20251001",
     useCase: "reasoning-heavy features",
   },
   costEffective: {
-    name: "Gemini 3.1 Flash",
-    id: "gemini-3.1-flash-lite",
+    name: "Gemini 2.5 Flash",
+    id: "gemini-2.5-flash-native-audio-preview-12-2025",
     useCase: "cost-sensitive or long-context features",
   },
   openaiAlternative: {
-    name: "O1",
-    id: "o1",
+    name: "O4-MINI",
+    id: "o4-mini",
     useCase: "OpenAI-ecosystem projects",
   },
 };
